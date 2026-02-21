@@ -1,0 +1,23 @@
+# --- BACKEND (Python/Django) ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+db.sqlite3
+/static/
+/media/
+
+# --- FRONTEND (Node/React) ---
+node_modules/
+dist/
+dist-ssr
+*.local
+.eslintcache
+
+# --- SYSTÈME & IDE ---
+.DS_Store
+.vscode/
+.idea/
+*.log

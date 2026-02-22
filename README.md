@@ -24,3 +24,4 @@ Bienvenue sur le dépôt de notre projet ! Cette application web est construite 
 - **Branche** : Créez une branche par fonctionnalité (`git checkout -b feature/nom-de-la-tâche`).
 - **PR** : Ouvrez une Pull Request pour fusionner vers `main`.
 - **Sync** : Faites un `git pull origin main` régulièrement pour éviter les conflits.
+Modification

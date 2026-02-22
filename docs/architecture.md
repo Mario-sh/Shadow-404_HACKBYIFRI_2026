@@ -136,3 +136,4 @@ npm run dev
 ```
 
 > **Note de développement:** L'application est prête à intégrer l'intelligence artificielle en production. Il suffit d'enrichir le frontend REACT pour qu'il consomme les API documentées et rende accessible aux utilisateurs la pleine valeur des parcours suggérés par l'IA.
+a

@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { authService } from '../services/auth.js'
+import { authService } from '../services/auth'
 
 export const AuthContext = createContext()
 
@@ -16,9 +16,10 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           const response = await authService.getProfile()
+          console.log('✅ Profil chargé:', response.data)
           setUser(response.data)
         } catch (error) {
-          console.error('Failed to load user', error)
+          console.error('❌ Erreur chargement profil:', error)
           localStorage.removeItem('access_token')
           localStorage.removeItem('refresh_token')
         }
@@ -32,19 +33,37 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
+      console.log('📤 Tentative de connexion avec:', credentials)
       const response = await authService.login(credentials)
+      console.log('✅ Réponse login:', response.data)
 
       localStorage.setItem('access_token', response.data.access)
       localStorage.setItem('refresh_token', response.data.refresh)
 
-      setUser(response.data.user)
-      navigate('/')
-
-      return { success: true }
+      if (response.data.user) {
+        setUser(response.data.user)
+        console.log('👤 Utilisateur connecté:', response.data.user)
+        navigate('/dashboard')
+        return { success: true }
+      } else {
+        return { success: false, error: 'Format de réponse invalide' }
+      }
     } catch (error) {
+      console.error('❌ Erreur login:', error)
+      console.error('Détails:', error.response?.data)
+
+      let errorMessage = 'Erreur de connexion'
+      if (error.response?.data) {
+        if (typeof error.response.data === 'object') {
+          errorMessage = Object.values(error.response.data).join(', ')
+        } else {
+          errorMessage = error.response.data
+        }
+      }
+
       return {
         success: false,
-        error: error.response?.data?.detail || 'Erreur de connexion'
+        error: errorMessage
       }
     }
   }
@@ -52,21 +71,16 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await authService.register(userData)
+      console.log('✅ Réponse register:', response.data)
 
-      // Auto-login après inscription
-      const loginResponse = await authService.login({
-        username: userData.username,
-        password: userData.password
-      })
+      localStorage.setItem('access_token', response.data.access)
+      localStorage.setItem('refresh_token', response.data.refresh)
 
-      localStorage.setItem('access_token', loginResponse.data.access)
-      localStorage.setItem('refresh_token', loginResponse.data.refresh)
-
-      setUser(loginResponse.data.user)
-      navigate('/')
-
+      setUser(response.data.user)
+      navigate('/dashboard')
       return { success: true }
     } catch (error) {
+      console.error('❌ Erreur register:', error)
       return {
         success: false,
         error: error.response?.data || 'Erreur lors de l\'inscription'
@@ -78,28 +92,31 @@ export const AuthProvider = ({ children }) => {
     try {
       const refreshToken = localStorage.getItem('refresh_token')
       if (refreshToken) {
-        await authService.logout(refreshToken)
+        // Essayer de déconnecter, mais ne pas bloquer si ça échoue
+        await authService.logout({ refresh: refreshToken }).catch(err => {
+          console.warn('Erreur logout API, nettoyage local quand même', err)
+        })
       }
     } catch (error) {
-      console.error('Logout error', error)
+      console.warn('Erreur lors de la déconnexion:', error)
     } finally {
+      // Toujours nettoyer le localStorage
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
       setUser(null)
       navigate('/login')
+      toast.success('Déconnexion réussie')
     }
   }
 
-  return (
-    <AuthContext.Provider value={{
-      user,
-      loading,
-      login,
-      register,
-      logout,
-      isAuthenticated: !!user
-    }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  const value = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    isAuthenticated: !!user
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

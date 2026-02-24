@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { academicService } from '../../services/academic'
 import { useAuth } from '../../hooks/useAuth'
@@ -11,44 +11,11 @@ import {
   ArrowPathIcon,
   DocumentTextIcon,
   VideoCameraIcon,
-  LinkIcon
+  LinkIcon,
+  StarIcon,
+  PlayIcon
 } from '@heroicons/react/24/outline'
-
-// Données mockées pour les exercices
-const mockExercices = [
-  {
-    id_exercice: 1,
-    titre: "Exercices sur les dérivées",
-    description: "Série d'exercices sur les dérivées partielles",
-    subject_nom: "Mathématiques",
-    niveau_difficulte: 2,
-    Type_ressource: "pdf"
-  },
-  {
-    id_exercice: 2,
-    titre: "Lois de Newton",
-    description: "Vidéo explicative sur les lois de Newton",
-    subject_nom: "Physique",
-    niveau_difficulte: 1,
-    Type_ressource: "video"
-  },
-  {
-    id_exercice: 3,
-    titre: "Algorithmes de tri",
-    description: "Exercices pratiques sur les algorithmes de tri",
-    subject_nom: "Informatique",
-    niveau_difficulte: 3,
-    Type_ressource: "document"
-  }
-]
-
-// Données mockées pour les matières
-const mockMatieres = [
-  { id_matiere: 1, nom_matière: "Mathématiques" },
-  { id_matiere: 2, nom_matière: "Physique" },
-  { id_matiere: 3, nom_matière: "Informatique" },
-  { id_matiere: 4, nom_matière: "Chimie" }
-]
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
 
 const ExercicesPage = () => {
   const { user } = useAuth()
@@ -57,89 +24,84 @@ const ExercicesPage = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState('all')
   const [selectedType, setSelectedType] = useState('all')
   const [viewMode, setViewMode] = useState('grid')
+  const [selectedExercice, setSelectedExercice] = useState(null)
+  const [showModal, setShowModal] = useState(false)
 
-  // Récupérer les exercices
-  const { data: exercicesData, isLoading: exercicesLoading, refetch } = useQuery({
-    queryKey: ['exercices', user?.id],
-    queryFn: () => academicService.getExercices().catch(() => mockExercices),
-    enabled: !!user?.id,
-    initialData: mockExercices
+  // ============================================
+  // 1. RÉCUPÉRER LES EXERCICES
+  // ============================================
+  const { data: exercicesData, isLoading, refetch } = useQuery({
+    queryKey: ['exercices', selectedMatiere, selectedDifficulty, selectedType],
+    queryFn: async () => {
+      try {
+        const params = {}
+        if (selectedMatiere !== 'all') params.subject = selectedMatiere
+        if (selectedDifficulty !== 'all') params.niveau_difficulte = selectedDifficulty
+
+        const response = await academicService.getExercices(params)
+        console.log('📚 Exercices reçus:', response.data)
+
+        // Adapter selon le format de réponse
+        return response.data?.results || response.data || []
+      } catch (error) {
+        console.error('❌ Erreur récupération exercices:', error)
+        return []
+      }
+    },
+    enabled: !!user?.id
   })
 
-  // Récupérer les matières
-  const { data: matieresData, isLoading: matieresLoading } = useQuery({
+  // ============================================
+  // 2. RÉCUPÉRER LES MATIÈRES
+  // ============================================
+  const { data: matieresData } = useQuery({
     queryKey: ['matieres'],
-    queryFn: () => academicService.getMatieres().catch(() => mockMatieres),
-    enabled: !!user?.id,
-    initialData: mockMatieres
+    queryFn: async () => {
+      try {
+        const response = await academicService.getMatieres()
+        return Array.isArray(response.data) ? response.data :
+               response.data?.results ? response.data.results : []
+      } catch (error) {
+        console.error('❌ Erreur récupération matières:', error)
+        return []
+      }
+    },
+    enabled: !!user?.id
   })
 
-  // S'assurer que les données sont des tableaux
+  // ============================================
+  // 3. S'ASSURER QUE LES DONNÉES SONT DES TABLEAUX
+  // ============================================
   const exercices = Array.isArray(exercicesData) ? exercicesData : []
   const matieres = Array.isArray(matieresData) ? matieresData : []
 
-  const isLoading = exercicesLoading || matieresLoading
-
-  const difficultyColors = {
-    1: {
-      bg: 'bg-green-100',
-      text: 'text-green-700',
-      border: 'border-green-200',
-      label: 'Facile',
-      icon: '🌱'
-    },
-    2: {
-      bg: 'bg-yellow-100',
-      text: 'text-yellow-700',
-      border: 'border-yellow-200',
-      label: 'Moyen',
-      icon: '📚'
-    },
-    3: {
-      bg: 'bg-red-100',
-      text: 'text-red-700',
-      border: 'border-red-200',
-      label: 'Difficile',
-      icon: '⚡'
-    },
+  // ============================================
+  // 4. CONFIGURATION
+  // ============================================
+  const difficultyConfig = {
+    1: { label: 'Facile', color: 'bg-green-100 text-green-700', icon: '🌱', border: 'border-green-200' },
+    2: { label: 'Moyen', color: 'bg-yellow-100 text-yellow-700', icon: '📚', border: 'border-yellow-200' },
+    3: { label: 'Difficile', color: 'bg-red-100 text-red-700', icon: '⚡', border: 'border-red-200' },
   }
 
-  // Fonction pour obtenir l'icône selon le type
-  const getTypeIcon = (type) => {
-    switch(type) {
-      case 'pdf':
-        return <DocumentTextIcon className="h-4 w-4 text-red-600" />
-      case 'video':
-        return <VideoCameraIcon className="h-4 w-4 text-blue-600" />
-      case 'lien':
-        return <LinkIcon className="h-4 w-4 text-green-600" />
-      default:
-        return <DocumentTextIcon className="h-4 w-4 text-secondary-600" />
-    }
+  const typeIcons = {
+    pdf: { icon: DocumentTextIcon, color: 'text-red-500', bg: 'bg-red-100' },
+    video: { icon: VideoCameraIcon, color: 'text-blue-500', bg: 'bg-blue-100' },
+    lien: { icon: LinkIcon, color: 'text-green-500', bg: 'bg-green-100' },
+    document: { icon: DocumentTextIcon, color: 'text-purple-500', bg: 'bg-purple-100' },
   }
 
-  // Fonction pour obtenir la couleur de fond selon le type
-  const getTypeBgColor = (type) => {
-    switch(type) {
-      case 'pdf':
-        return 'bg-red-100'
-      case 'video':
-        return 'bg-blue-100'
-      case 'lien':
-        return 'bg-green-100'
-      default:
-        return 'bg-secondary-100'
-    }
-  }
-
-  // Filtrer les exercices
+  // ============================================
+  // 5. FILTRES
+  // ============================================
   const filteredExercices = exercices.filter(ex => {
-    if (selectedMatiere !== 'all' && ex.subject_nom !== selectedMatiere) return false
+    if (selectedMatiere !== 'all' && ex.subject_id !== parseInt(selectedMatiere)) return false
     if (selectedDifficulty !== 'all' && ex.niveau_difficulte !== parseInt(selectedDifficulty)) return false
     if (selectedType !== 'all' && ex.Type_ressource !== selectedType) return false
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase()
       return ex.titre?.toLowerCase().includes(searchLower) ||
+             ex.subject_nom?.toLowerCase().includes(searchLower) ||
              ex.description?.toLowerCase().includes(searchLower)
     }
     return true
@@ -148,286 +110,330 @@ const ExercicesPage = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="relative">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary-200 border-t-primary-600"></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <BookOpenIcon className="h-6 w-6 text-primary-600 animate-pulse" />
-          </div>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-200 border-t-primary-600" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in p-6">
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-secondary-900">Exercices</h1>
+          <h1 className="text-2xl font-bold text-secondary-900">Bibliothèque d'exercices</h1>
           <p className="text-secondary-600 mt-1">
-            Pratiquez avec des exercices adaptés à votre niveau
+            {filteredExercices.length} exercice{filteredExercices.length > 1 ? 's' : ''} disponible{filteredExercices.length > 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          onClick={() => refetch()}
-          className="p-2 bg-secondary-100 rounded-xl hover:bg-secondary-200 transition-colors"
-        >
-          <ArrowPathIcon className="h-5 w-5 text-secondary-600" />
-        </button>
-      </div>
-
-      {/* Statistiques rapides */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl p-6 text-white shadow-lg">
-          <p className="text-sm opacity-90">Total exercices</p>
-          <p className="text-3xl font-bold mt-2">{exercices.length}</p>
-        </div>
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-lg">
-          <p className="text-sm opacity-90">Complétés</p>
-          <p className="text-3xl font-bold mt-2">24</p>
-        </div>
-        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl p-6 text-white shadow-lg">
-          <p className="text-sm opacity-90">En cours</p>
-          <p className="text-3xl font-bold mt-2">12</p>
-        </div>
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
-          <p className="text-sm opacity-90">Taux réussite</p>
-          <p className="text-3xl font-bold mt-2">78%</p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => refetch()}
+            className="p-2 bg-secondary-100 rounded-xl hover:bg-secondary-200 transition-colors"
+            title="Rafraîchir"
+          >
+            <ArrowPathIcon className="h-5 w-5 text-secondary-600" />
+          </button>
+          {(user?.role === 'professeur' || user?.role === 'admin') && (
+            <button
+              onClick={() => window.location.href = '/exercices/creation'}
+              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors"
+            >
+              <SparklesIcon className="h-5 w-5" />
+              Créer un exercice
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Barre de recherche et filtres */}
+      {/* Filtres */}
       <div className="bg-white rounded-2xl shadow-lg border border-secondary-100 p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative md:col-span-2">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-secondary-400" />
             <input
               type="text"
-              placeholder="Rechercher un exercice..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl border border-secondary-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none transition-all"
+              placeholder="Rechercher un exercice par titre ou matière..."
+              className="w-full pl-10 pr-4 py-2 rounded-xl border border-secondary-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none"
             />
           </div>
 
           <select
             value={selectedMatiere}
             onChange={(e) => setSelectedMatiere(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-secondary-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none transition-all"
+            className="px-4 py-2 rounded-xl border border-secondary-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none"
           >
             <option value="all">Toutes les matières</option>
             {matieres.map(m => (
-              <option key={m.id_matiere} value={m.nom_matière}>{m.nom_matière}</option>
+              <option key={m.id_matiere} value={m.id_matiere}>{m.nom_matière}</option>
             ))}
           </select>
 
           <select
             value={selectedDifficulty}
             onChange={(e) => setSelectedDifficulty(e.target.value)}
-            className="px-4 py-2 rounded-xl border border-secondary-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none transition-all"
+            className="px-4 py-2 rounded-xl border border-secondary-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none"
           >
             <option value="all">Tous niveaux</option>
-            <option value="1">Facile</option>
-            <option value="2">Moyen</option>
-            <option value="3">Difficile</option>
+            <option value="1">Facile 🌱</option>
+            <option value="2">Moyen 📚</option>
+            <option value="3">Difficile ⚡</option>
           </select>
         </div>
 
-        {/* Filtres supplémentaires */}
-        <div className="flex flex-wrap items-center justify-between mt-4 pt-4 border-t border-secondary-100">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setSelectedType('all')}
-              className={`px-3 py-1 rounded-lg text-sm transition-colors ${
-                selectedType === 'all'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-secondary-100 text-secondary-600 hover:bg-secondary-200'
-              }`}
-            >
-              Tous
-            </button>
-            <button
-              onClick={() => setSelectedType('pdf')}
-              className={`px-3 py-1 rounded-lg text-sm transition-colors flex items-center gap-1 ${
-                selectedType === 'pdf'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-red-100 text-red-600 hover:bg-red-200'
-              }`}
-            >
-              <DocumentTextIcon className="h-4 w-4" />
-              PDF
-            </button>
-            <button
-              onClick={() => setSelectedType('video')}
-              className={`px-3 py-1 rounded-lg text-sm transition-colors flex items-center gap-1 ${
-                selectedType === 'video'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-              }`}
-            >
-              <VideoCameraIcon className="h-4 w-4" />
-              Vidéos
-            </button>
-            <button
-              onClick={() => setSelectedType('lien')}
-              className={`px-3 py-1 rounded-lg text-sm transition-colors flex items-center gap-1 ${
-                selectedType === 'lien'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-green-100 text-green-600 hover:bg-green-200'
-              }`}
-            >
-              <LinkIcon className="h-4 w-4" />
-              Liens
-            </button>
-          </div>
+        {/* Vue toggle et filtres supplémentaires */}
+        <div className="mt-4 flex items-center justify-between">
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="px-4 py-2 rounded-xl border border-secondary-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 outline-none"
+          >
+            <option value="all">Tous types</option>
+            <option value="pdf">PDF</option>
+            <option value="video">Vidéo</option>
+            <option value="lien">Lien</option>
+            <option value="document">Document</option>
+          </select>
 
-          <div className="flex gap-2">
+          <div className="bg-secondary-100 rounded-lg p-1 inline-flex">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-colors ${
-                viewMode === 'grid' ? 'bg-primary-600 text-white' : 'bg-secondary-100 text-secondary-600'
+              className={`px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-1 ${
+                viewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-secondary-200'
               }`}
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
               </svg>
+              Grille
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-colors ${
-                viewMode === 'list' ? 'bg-primary-600 text-white' : 'bg-secondary-100 text-secondary-600'
+              className={`px-3 py-1.5 rounded-lg text-sm transition-colors flex items-center gap-1 ${
+                viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-secondary-200'
               }`}
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
+              Liste
             </button>
           </div>
         </div>
       </div>
 
-      {/* Message si aucun exercice */}
-      {filteredExercices.length === 0 && (
+      {/* Liste des exercices */}
+      {filteredExercices.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-secondary-200">
           <BookOpenIcon className="h-12 w-12 text-secondary-300 mx-auto mb-4" />
           <p className="text-secondary-500">Aucun exercice trouvé</p>
           <p className="text-sm text-secondary-400 mt-1">
-            Essayez de modifier vos filtres
+            Essayez de modifier vos filtres ou revenez plus tard
           </p>
         </div>
-      )}
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredExercices.map((exercice) => {
+            const difficulty = difficultyConfig[exercice.niveau_difficulte] || difficultyConfig[1]
+            const TypeIcon = typeIcons[exercice.Type_ressource]?.icon || DocumentTextIcon
+            const typeColor = typeIcons[exercice.Type_ressource]?.color || 'text-secondary-500'
+            const typeBg = typeIcons[exercice.Type_ressource]?.bg || 'bg-secondary-100'
 
-      {/* Vue Grid */}
-      {viewMode === 'grid' && filteredExercices.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredExercices.map((exercice, index) => (
-            <div
-              key={exercice.id_exercice || index}
-              className="bg-white rounded-2xl shadow-lg border border-secondary-100 overflow-hidden hover:shadow-xl transition-all duration-300 animate-slide-up group"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {/* En-tête */}
-              <div className="h-32 bg-gradient-to-br from-primary-500 to-primary-600 relative">
-                <div className="absolute inset-0 bg-black opacity-20"></div>
-                <div className="absolute bottom-4 left-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium border-2 border-white/30 ${difficultyColors[exercice.niveau_difficulte]?.bg} ${difficultyColors[exercice.niveau_difficulte]?.text}`}>
-                    {difficultyColors[exercice.niveau_difficulte]?.icon} {difficultyColors[exercice.niveau_difficulte]?.label}
-                  </span>
-                </div>
-                <div className="absolute top-4 right-4">
-                  <span className="bg-white/90 px-3 py-1 rounded-full text-xs font-medium text-secondary-700">
-                    {exercice.subject_nom}
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-secondary-900 mb-2 group-hover:text-primary-600 transition-colors">
-                  {exercice.titre}
-                </h3>
-
-                <p className="text-secondary-600 text-sm mb-4 line-clamp-2">
-                  {exercice.description || "Aucune description disponible"}
-                </p>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-2 rounded-lg ${getTypeBgColor(exercice.Type_ressource)}`}>
-                      {getTypeIcon(exercice.Type_ressource)}
-                    </div>
-                    <span className="text-sm text-secondary-500">
-                      {exercice.Type_ressource || 'document'}
+            return (
+              <div
+                key={exercice.id_exercice}
+                className="bg-white rounded-2xl shadow-lg border border-secondary-100 overflow-hidden hover:shadow-xl transition-all group cursor-pointer"
+                onClick={() => {
+                  setSelectedExercice(exercice)
+                  setShowModal(true)
+                }}
+              >
+                {/* En-tête avec couleur selon difficulté */}
+                <div className={`h-32 ${difficulty.color.split(' ')[0]} p-4 relative`}>
+                  <div className="absolute top-4 right-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${difficulty.color}`}>
+                      {difficulty.icon} {difficulty.label}
                     </span>
                   </div>
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold text-secondary-900 line-clamp-1">
+                      {exercice.titre}
+                    </h3>
+                    <p className="text-sm text-secondary-600 mt-1">{exercice.subject_nom}</p>
+                  </div>
+                </div>
 
-                  <button className="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors text-sm">
-                    Commencer
-                  </button>
+                {/* Contenu */}
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-2 rounded-lg ${typeBg}`}>
+                        <TypeIcon className={`h-4 w-4 ${typeColor}`} />
+                      </div>
+                      <span className="text-sm text-secondary-600 capitalize">
+                        {exercice.Type_ressource || 'Document'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3].map((star) => (
+                        star <= exercice.niveau_difficulte ? (
+                          <StarIconSolid key={star} className="h-4 w-4 text-yellow-400" />
+                        ) : (
+                          <StarIcon key={star} className="h-4 w-4 text-secondary-200" />
+                        )
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-sm text-secondary-500">
+                      <ClockIcon className="h-4 w-4" />
+                      <span>30 min</span>
+                    </div>
+                    <button className="flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors">
+                      <PlayIcon className="h-4 w-4" />
+                      <span className="text-sm">Commencer</span>
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl shadow-lg border border-secondary-100 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-secondary-50 border-b border-secondary-200">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-secondary-600">Titre</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-secondary-600">Matière</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-secondary-600">Difficulté</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-secondary-600">Type</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-secondary-600">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-secondary-100">
+              {filteredExercices.map((exercice) => {
+                const difficulty = difficultyConfig[exercice.niveau_difficulte] || difficultyConfig[1]
+                const TypeIcon = typeIcons[exercice.Type_ressource]?.icon || DocumentTextIcon
+                const typeColor = typeIcons[exercice.Type_ressource]?.color || 'text-secondary-500'
+
+                return (
+                  <tr key={exercice.id_exercice} className="hover:bg-secondary-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-medium text-secondary-900">{exercice.titre}</span>
+                    </td>
+                    <td className="px-6 py-4 text-secondary-600">{exercice.subject_nom}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${difficulty.color}`}>
+                        {difficulty.icon} {difficulty.label}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <TypeIcon className={`h-4 w-4 ${typeColor}`} />
+                        <span className="text-sm text-secondary-600 capitalize">
+                          {exercice.Type_ressource || 'Document'}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => {
+                          setSelectedExercice(exercice)
+                          setShowModal(true)
+                        }}
+                        className="px-3 py-1 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm"
+                      >
+                        Voir
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Vue Liste */}
-      {viewMode === 'list' && filteredExercices.length > 0 && (
-        <div className="space-y-4">
-          {filteredExercices.map((exercice, index) => (
-            <div
-              key={exercice.id_exercice || index}
-              className="bg-white rounded-2xl shadow-lg border border-secondary-100 p-6 hover:shadow-xl transition-all duration-300 animate-slide-up"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-xl ${difficultyColors[exercice.niveau_difficulte]?.bg}`}>
-                  <span className="text-2xl">{difficultyColors[exercice.niveau_difficulte]?.icon}</span>
-                </div>
+      {/* Modal de détail */}
+      {showModal && selectedExercice && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full animate-slide-up max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-secondary-100 flex items-center justify-between sticky top-0 bg-white">
+              <div>
+                <h3 className="text-xl font-semibold text-secondary-900">{selectedExercice.titre}</h3>
+                <p className="text-sm text-secondary-500 mt-1">{selectedExercice.subject_nom}</p>
+              </div>
+              <button onClick={() => setShowModal(false)} className="text-secondary-400 hover:text-secondary-600">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-                <div className="flex-1">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-secondary-900">{exercice.titre}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-sm text-secondary-500">{exercice.subject_nom}</span>
-                        <span className="text-secondary-300">•</span>
-                        <span className={`text-sm font-medium ${difficultyColors[exercice.niveau_difficulte]?.text}`}>
-                          {difficultyColors[exercice.niveau_difficulte]?.label}
-                        </span>
-                        <span className="text-secondary-300">•</span>
-                        <div className={`px-2 py-0.5 rounded-lg ${getTypeBgColor(exercice.Type_ressource)}`}>
-                          <span className="text-xs">{exercice.Type_ressource || 'document'}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button className="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors">
-                      Commencer
-                    </button>
-                  </div>
-
-                  <p className="text-secondary-600 text-sm mt-3">
-                    {exercice.description || "Aucune description disponible"}
+            <div className="p-6">
+              {/* Métadonnées */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 bg-secondary-50 rounded-xl">
+                  <p className="text-sm text-secondary-600">Difficulté</p>
+                  <p className="text-lg font-semibold text-secondary-900">
+                    {difficultyConfig[selectedExercice.niveau_difficulte]?.label}
                   </p>
-
-                  <div className="flex items-center gap-4 mt-4">
-                    <div className="flex items-center gap-1">
-                      <ClockIcon className="h-4 w-4 text-secondary-400" />
-                      <span className="text-xs text-secondary-500">30 min estimé</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <SparklesIcon className="h-4 w-4 text-secondary-400" />
-                      <span className="text-xs text-secondary-500">4.5/5</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <AcademicCapIcon className="h-4 w-4 text-secondary-400" />
-                      <span className="text-xs text-secondary-500">156 complétés</span>
-                    </div>
-                  </div>
+                </div>
+                <div className="p-4 bg-secondary-50 rounded-xl">
+                  <p className="text-sm text-secondary-600">Type</p>
+                  <p className="text-lg font-semibold text-secondary-900 capitalize">
+                    {selectedExercice.Type_ressource || 'Document'}
+                  </p>
                 </div>
               </div>
+
+              {/* Description */}
+              {selectedExercice.description && (
+                <div className="mb-6">
+                  <h4 className="font-semibold text-secondary-900 mb-2">Description</h4>
+                  <p className="text-secondary-600 bg-secondary-50 p-4 rounded-xl">
+                    {selectedExercice.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Fichier */}
+              {selectedExercice.fichier_url && (
+                <div className="mb-6">
+                  <h4 className="font-semibold text-secondary-900 mb-2">Ressource</h4>
+                  <a
+                    href={selectedExercice.fichier_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-4 bg-secondary-50 rounded-xl hover:bg-secondary-100 transition-colors"
+                  >
+                    <DocumentTextIcon className="h-6 w-6 text-primary-600" />
+                    <div className="flex-1">
+                      <p className="font-medium text-secondary-900">Télécharger le fichier</p>
+                      <p className="text-sm text-secondary-500">Cliquez pour ouvrir</p>
+                    </div>
+                  </a>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 border border-secondary-200 text-secondary-600 rounded-lg hover:bg-secondary-50"
+                >
+                  Fermer
+                </button>
+                <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2">
+                  <PlayIcon className="h-4 w-4" />
+                  Commencer l'exercice
+                </button>
+              </div>
             </div>
-          ))}
+          </div>
         </div>
       )}
     </div>

@@ -1,15 +1,15 @@
 import api from './api'
 
 export const iaService = {
-  getSuggestions: (etudiantId, nb = 5) => {
-    const id = Number(etudiantId)
-    return api.get(`/ia/suggestions/pour_etudiant/?etudiant_id=${id}&nb=${nb}`)
-  },
+  // Suggestions d'exercices pour un étudiant
+  getSuggestions: (etudiantId, nb = 5) =>
+    api.get(`/ia/suggestions/pour_etudiant/?etudiant_id=${etudiantId}&nb=${nb}`),
 
-  getAnalyseComplete: (etudiantId) => {
-    const id = Number(etudiantId)
-    return api.get(`/ia/suggestions/analyse_complete/?etudiant_id=${id}`)
-  },
+  // Analyse complète des performances
+  getAnalyseComplete: (etudiantId) =>
+    api.get(`/ia/suggestions/analyse_complete/?etudiant_id=${etudiantId}`),
 
-  sendFeedback: (data) => api.post('/ia/suggestions/feedback/', data),
+  // Feedback sur une suggestion
+  sendFeedback: (suggestionId, estUtile) =>
+    api.post('/ia/suggestions/feedback/', { suggestion_id: suggestionId, est_utile: estUtile }),
 }

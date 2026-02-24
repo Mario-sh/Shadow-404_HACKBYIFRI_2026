@@ -1,50 +1,36 @@
 from django.db import models
-from apps.academic.models import Etudiant, BanqueExercices, Note, Matiere
-
-
-class ModeleIA(models.Model):
-    """Enregistre les modèles d'IA entraînés"""
-    nom = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    fichier_modele = models.FileField(upload_to='modeles_ia/', null=True, blank=True)
-    precision = models.FloatField(null=True, blank=True)
-    date_creation = models.DateTimeField(auto_now_add=True)
-    actif = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = 'modele_ia'
-        verbose_name = "Modèle IA"
-        verbose_name_plural = "Modèles IA"
-
-    def __str__(self):
-        return f"{self.nom} - {self.date_creation.strftime('%d/%m/%Y')}"
-
+# Ne pas importer directement depuis academic.models
+# Utilisez des chaînes de caractères pour les ForeignKey
 
 class SuggestionExercice(models.Model):
-    """Suggestions d'exercices pour les étudiants"""
+    NIVEAUX = (
+        (1, 'Facile'),
+        (2, 'Moyen'),
+        (3, 'Difficile'),
+    )
+
     id_suggestion = models.AutoField(primary_key=True)
-    etudiant = models.ForeignKey('academic.Etudiant', on_delete=models.CASCADE, related_name='suggestions')
+    # Utilisez des chaînes pour éviter les imports circulaires
+    etudiant = models.ForeignKey('academic.Etudiant', on_delete=models.CASCADE)
     exercice = models.ForeignKey('academic.BanqueExercices', on_delete=models.CASCADE)
     matiere = models.ForeignKey('academic.Matiere', on_delete=models.CASCADE, null=True)
-    note_actuelle = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
+    note_actuelle = models.DecimalField(max_digits=4, decimal_places=2, null=True)
     raison = models.TextField()
-    niveau_suggere = models.IntegerField(choices=[(1, 'Facile'), (2, 'Moyen'), (3, 'Difficile')])
+    niveau_suggere = models.IntegerField(choices=NIVEAUX)
     date_suggestion = models.DateTimeField(auto_now_add=True)
     est_consultee = models.BooleanField(default=False)
     est_faite = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'suggestion_exercice'
-        ordering = ['-date_suggestion']
 
     def __str__(self):
-        return f"{self.etudiant} → {self.exercice.titre}"
+        return f"Suggestion pour {self.etudiant_id}"
 
 
 class StatistiqueApprentissage(models.Model):
-    """Suivi des progrès des étudiants"""
-    etudiant = models.ForeignKey(Etudiant, on_delete=models.CASCADE)
-    matiere = models.ForeignKey(Matiere, on_delete=models.CASCADE)
+    etudiant = models.ForeignKey('academic.Etudiant', on_delete=models.CASCADE)
+    matiere = models.ForeignKey('academic.Matiere', on_delete=models.CASCADE)
     moyenne = models.DecimalField(max_digits=4, decimal_places=2, null=True)
     exercices_realises = models.IntegerField(default=0)
     exercices_reussis = models.IntegerField(default=0)
@@ -56,4 +42,4 @@ class StatistiqueApprentissage(models.Model):
         unique_together = ['etudiant', 'matiere']
 
     def __str__(self):
-        return f"{self.etudiant} - {self.matiere} - {self.taux_reussite}%"
+        return f"Stats {self.etudiant_id} - {self.matiere_id}"

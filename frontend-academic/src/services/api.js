@@ -10,27 +10,43 @@ const api = axios.create({
   },
 })
 
-// Intercepteur pour ajouter le token
+// Intercepteur pour ajouter le token JWT
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    console.log('🔵 Requête:', config.method.toUpperCase(), config.url)
     return config
   },
   (error) => Promise.reject(error)
 )
 
-// Intercepteur pour gérer les erreurs
+// Intercepteur pour gérer les erreurs 401 (token expiré)
 api.interceptors.response.use(
-  (response) => {
-    console.log('🟢 Réponse:', response.status, response.config.url)
-    return response
-  },
-  (error) => {
-    console.log('🔴 Erreur:', error.response?.status, error.config?.url)
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+
+      try {
+        const refreshToken = localStorage.getItem('refresh_token')
+        const response = await axios.post(`${API_URL}/auth/token/refresh/`, {
+          refresh: refreshToken
+        })
+
+        localStorage.setItem('access_token', response.data.access)
+        originalRequest.headers.Authorization = `Bearer ${response.data.access}`
+        return api(originalRequest)
+      } catch (refreshError) {
+        localStorage.clear()
+        window.location.href = '/login'
+        return Promise.reject(refreshError)
+      }
+    }
+
     return Promise.reject(error)
   }
 )

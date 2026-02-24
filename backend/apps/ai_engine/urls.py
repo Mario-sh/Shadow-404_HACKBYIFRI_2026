@@ -1,10 +1,14 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import SmartSuggestionViewSet
-
-router = DefaultRouter()
-router.register(r'suggestions', SmartSuggestionViewSet, basename='ia-suggestions')
+from django.urls import path
+from . import views
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('suggestions/pour_etudiant/',
+         views.SuggestionsPourEtudiantView.as_view(),
+         name='suggestions-pour-etudiant'),
+    path('suggestions/analyse_complete/',
+         views.AnalyseCompleteView.as_view(),
+         name='analyse-complete'),
+    path('suggestions/feedback/',
+         views.FeedbackSuggestionView.as_view(),
+         name='suggestions-feedback'),
 ]

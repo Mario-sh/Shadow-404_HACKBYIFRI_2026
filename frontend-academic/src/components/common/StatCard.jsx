@@ -39,6 +39,12 @@ const StatCard = ({ title, value, icon: Icon, color = 'primary', trend, subtitle
       text: 'text-red-700',
       border: 'border-red-200'
     },
+    orange: {
+      gradient: 'from-orange-50 to-orange-100',
+      icon: 'bg-gradient-to-br from-orange-500 to-orange-600',
+      text: 'text-orange-700',
+      border: 'border-orange-200'
+    },
   }
 
   return (
@@ -47,9 +53,7 @@ const StatCard = ({ title, value, icon: Icon, color = 'primary', trend, subtitle
         <div className="flex-1">
           <p className="text-sm font-medium text-secondary-600">{title}</p>
           <p className="mt-2 text-3xl font-bold text-secondary-900">{value}</p>
-          {subtitle && (
-            <p className="text-xs text-secondary-500 mt-1">{subtitle}</p>
-          )}
+          {subtitle && <p className="text-xs text-secondary-500 mt-1">{subtitle}</p>}
 
           {trend && (
             <div className="mt-3 flex items-center gap-1">
@@ -60,11 +64,10 @@ const StatCard = ({ title, value, icon: Icon, color = 'primary', trend, subtitle
               ) : null}
               <span className={`text-sm font-medium ${
                 trend === 'up' ? 'text-green-600' : 
-                trend === 'down' ? 'text-red-600' : 'text-secondary-600'
+                trend === 'down' ? 'text-red-600' : ''
               }`}>
-                {trend === 'up' ? '+2.5' : trend === 'down' ? '-1.2' : '0'}%
+                {trend === 'up' ? '+2.5' : '-1.2'}%
               </span>
-              <span className="text-xs text-secondary-500 ml-1">vs mois dernier</span>
             </div>
           )}
         </div>

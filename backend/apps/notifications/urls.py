@@ -1,10 +1,9 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import NotificationViewSet
-
-router = DefaultRouter()
-router.register(r'', NotificationViewSet, basename='notifications')
+from django.urls import path
+from . import views
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('', views.NotificationListView.as_view(), name='notification-list'),
+    path('non_lues/', views.NotificationNonLuesView.as_view(), name='notification-non-lues'),
+    path('<int:pk>/marquer_lu/', views.MarquerNotificationLuView.as_view(), name='notification-marquer-lu'),
+    path('marquer_tout_lu/', views.MarquerToutLuView.as_view(), name='notification-marquer-tout-lu'),
 ]

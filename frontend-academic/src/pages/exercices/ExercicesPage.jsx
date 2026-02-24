@@ -115,6 +115,41 @@ const ExercicesPage = () => {
     )
   }
 
+  // ============================================
+// 6. GESTION DU CLIC SUR COMMENCER
+// ============================================
+const handleStartExercice = (exercice, e) => {
+  // Empêcher la propagation si cliqué depuis la carte
+  if (e) {
+    e.stopPropagation()
+  }
+
+  // Selon le type d'exercice
+  if (exercice.Type_ressource === 'lien' && exercice.contenu) {
+    // C'est un lien externe
+    window.open(exercice.contenu, '_blank', 'noopener noreferrer')
+  }
+  else if (exercice.fichier_url) {
+    // C'est un fichier uploadé
+    if (exercice.Type_ressource === 'pdf') {
+      // Ouvrir le PDF dans un nouvel onglet
+      window.open(exercice.fichier_url, '_blank')
+    } else {
+      // Télécharger le fichier
+      const link = document.createElement('a')
+      link.href = exercice.fichier_url
+      link.setAttribute('download', '') // Force le téléchargement
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+    }
+  }
+  else {
+    // Exercice texte - rediriger vers la page de l'exercice
+    navigate(`/exercices/${exercice.id_exercice}`)
+  }
+}
+
   return (
     <div className="space-y-6 animate-fade-in p-6">
       {/* En-tête */}
@@ -291,7 +326,9 @@ const ExercicesPage = () => {
                       <ClockIcon className="h-4 w-4" />
                       <span>30 min</span>
                     </div>
-                    <button className="flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors">
+                    <button
+                        onClick={(e) => handleStartExercice(exercice, e)}
+                        className="flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors">
                       <PlayIcon className="h-4 w-4" />
                       <span className="text-sm">Commencer</span>
                     </button>
@@ -427,7 +464,9 @@ const ExercicesPage = () => {
                 >
                   Fermer
                 </button>
-                <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2">
+                <button
+                     onClick={() => handleStartExercice(selectedExercice)}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-2">
                   <PlayIcon className="h-4 w-4" />
                   Commencer l'exercice
                 </button>

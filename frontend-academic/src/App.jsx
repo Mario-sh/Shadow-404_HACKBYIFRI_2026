@@ -15,12 +15,16 @@ const SuggestionsPage = lazy(() => import('./pages/ia/SuggestionsPage'))
 const NotesPage = lazy(() => import('./pages/notes/NotesPage'))
 const ExercicesPage = lazy(() => import('./pages/exercices/ExercicesPage'))
 const StatistiquesPage = lazy(() => import('./pages/statistiques/StatistiquesPage'))
+// AJOUT: Page ressources étudiant
+const EtudiantRessourcesPage = lazy(() => import('./pages/etudiant/RessourcesPage'))
 
 // Pages professeur
 const ProfesseurDashboard = lazy(() => import('./pages/dashboard/ProfesseurDashboard'))
 const GestionEtudiantsPage = lazy(() => import('./pages/professeur/GestionEtudiantsPage'))
 const SaisieNotesPage = lazy(() => import('./pages/professeur/SaisieNotesPage'))
 const CreationExercicePage = lazy(() => import('./pages/professeur/CreationExercicePage'))
+// AJOUT: Page ressources professeur
+const ProfesseurRessourcesPage = lazy(() => import('./pages/professeur/GestionRessourcesPage.jsx'))
 
 // Pages admin
 const AdminDashboard = lazy(() => import('./pages/dashboard/AdminDashboard'))
@@ -28,7 +32,8 @@ const GestionUtilisateursPage = lazy(() => import('./pages/admin/GestionUtilisat
 const GestionClassesPage = lazy(() => import('./pages/admin/GestionClassesPage'))
 const GestionMatieresPage = lazy(() => import('./pages/admin/GestionMatieresPage'))
 const LogsPage = lazy(() => import('./pages/admin/LogsPage'))
-const RessourcesPage = lazy(() => import('./pages/admin/RessourcesPage'))
+// RENAME: Page ressources admin (pour plus de clarté)
+const AdminRessourcesPage = lazy(() => import('./pages/admin/RessourcesPage'))
 const ValidationsProfesseursPage = lazy(() => import('./pages/admin/ValidationsProfesseursPage'))
 
 // Pages communes
@@ -79,7 +84,29 @@ const App = () => {
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="calendrier" element={<CalendrierPage />} />
           <Route path="chat" element={<ChatPage />} />
-          <Route path="ressources" element={<RessourcesPage />} />
+
+          {/* ===== ROUTES RESSOURCES PAR RÔLE ===== */}
+          {/* Route par défaut - redirige vers la bonne page selon le rôle */}
+          <Route path="ressources" element={<RoleBasedRessources />} />
+
+          {/* Routes explicites par rôle */}
+          <Route path="etudiant/ressources" element={
+            <ProtectedRoute allowedRoles={['etudiant']}>
+              <EtudiantRessourcesPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="professeur/ressources" element={
+            <ProtectedRoute allowedRoles={['professeur', 'admin']}>
+              <ProfesseurRessourcesPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="admin/ressources" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminRessourcesPage />
+            </ProtectedRoute>
+          } />
 
           {/* ===== ROUTES PROFESSEUR ===== */}
           <Route path="etudiants" element={
@@ -154,6 +181,24 @@ const RoleBasedDashboard = () => {
       return <ProfesseurDashboard />
     default:
       return <EtudiantDashboard />
+  }
+}
+
+// NOUVEAU: Composant pour rediriger vers la bonne page ressources
+const RoleBasedRessources = () => {
+  const { user } = useAuth()
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  switch (user.role) {
+    case 'admin':
+      return <Navigate to="/admin/ressources" replace />
+    case 'professeur':
+      return <Navigate to="/professeur/ressources" replace />
+    default:
+      return <Navigate to="/etudiant/ressources" replace />
   }
 }
 

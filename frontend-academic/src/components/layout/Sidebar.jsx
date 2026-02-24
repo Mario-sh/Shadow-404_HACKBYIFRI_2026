@@ -127,117 +127,119 @@ const Sidebar = ({ isOpen, onClose }) => {
     }
   }
 
-  // Navigation pour admin
-  const adminNavigation = useMemo(() => [
-    {
-      category: 'Principal',
-      items: [
-        { name: 'Dashboard', to: '/dashboard', icon: Squares2X2Icon, iconSolid: Squares2X2IconSolid },
-        { name: 'Mon profil', to: '/profil', icon: UserIcon, iconSolid: UserIconSolid },
-        { name: 'Paramètres', to: '/parametres', icon: Cog6ToothIcon, iconSolid: Cog6ToothIconSolid },
-        { name: 'Notifications', to: '/notifications', icon: BellIcon, iconSolid: BellIconSolid },
-        { name: 'Calendrier', to: '/calendrier', icon: CalendarIcon, iconSolid: CalendarIconSolid },
-        { name: 'Chat', to: '/chat', icon: ChatBubbleLeftRightIcon, iconSolid: ChatBubbleLeftRightIconSolid },
-      ]
-    },
-    {
-      category: 'Gestion des utilisateurs',
-      items: [
-        { name: 'Tous les utilisateurs', to: '/utilisateurs', icon: UsersIcon, iconSolid: UsersIconSolid },
-        { name: 'Étudiants', to: '/utilisateurs?role=etudiant', icon: AcademicCapIcon, iconSolid: AcademicCapIconSolid },
-        { name: 'Professeurs', to: '/utilisateurs?role=professeur', icon: UserGroupIcon, iconSolid: UserGroupIconSolid },
-        { name: 'Administrateurs', to: '/utilisateurs?role=admin', icon: ShieldCheckIcon, iconSolid: ShieldCheckIconSolid },
-      ]
-    },
-    {
-      category: 'Validations',
-      items: [
-        {
-          name: 'Professeurs à valider',
-          to: '/admin/validations',
-          icon: ClockIcon,
-          iconSolid: ClockIconSolid,
-          badge: pendingCount
-        },
-      ]
-    },
-    {
-      category: 'Gestion académique',
-      items: [
-        { name: 'Classes', to: '/classes', icon: BuildingOfficeIcon, iconSolid: BuildingOfficeIconSolid },
-        { name: 'Matières', to: '/matieres', icon: BookOpenIcon, iconSolid: BookOpenIconSolid },
-        { name: 'Notes', to: '/notes', icon: DocumentTextIcon, iconSolid: DocumentTextIconSolid },
-        { name: 'Exercices', to: '/exercices', icon: FolderIcon, iconSolid: FolderIconSolid },
-        { name: 'Ressources', to: '/ressources', icon: ArchiveBoxIcon, iconSolid: ArchiveBoxIconSolid },
-      ]
-    },
-    {
-      category: 'Statistiques',
-      items: [
-        { name: 'Statistiques globales', to: '/statistiques', icon: PresentationChartLineIcon, iconSolid: PresentationChartLineIconSolid },
-        { name: 'Suggestions IA', to: '/suggestions', icon: LightBulbIcon, iconSolid: LightBulbIconSolid },
-        { name: 'Logs système', to: '/logs', icon: ClockIcon, iconSolid: ClockIconSolid },
-      ]
-    }
-  ], [pendingCount])
+  // src/components/layout/Sidebar.jsx
 
-  // Navigation pour professeur
-  const professorNavigation = useMemo(() => [
-    {
-      category: 'Principal',
-      items: [
-        { name: 'Dashboard', to: '/dashboard', icon: Squares2X2Icon, iconSolid: Squares2X2IconSolid },
-        { name: 'Mon profil', to: '/profil', icon: UserIcon, iconSolid: UserIconSolid },
-        { name: 'Paramètres', to: '/parametres', icon: Cog6ToothIcon, iconSolid: Cog6ToothIconSolid },
-        { name: 'Notifications', to: '/notifications', icon: BellIcon, iconSolid: BellIconSolid },
-        { name: 'Calendrier', to: '/calendrier', icon: CalendarIcon, iconSolid: CalendarIconSolid },
-        { name: 'Chat', to: '/chat', icon: ChatBubbleLeftRightIcon, iconSolid: ChatBubbleLeftRightIconSolid },
-      ]
-    },
-    {
-      category: 'Gestion',
-      items: [
-        { name: 'Étudiants', to: '/etudiants', icon: UserGroupIcon, iconSolid: UserGroupIconSolid },
-        { name: 'Notes', to: '/notes', icon: DocumentTextIcon, iconSolid: DocumentTextIconSolid },
-        { name: 'Saisie des notes', to: '/notes/saisie', icon: PencilSquareIcon, iconSolid: PencilSquareIconSolid },
-        { name: 'Exercices', to: '/exercices', icon: FolderIcon, iconSolid: FolderIconSolid },
-        { name: 'Ressources', to: '/ressources', icon: ArchiveBoxIcon, iconSolid: ArchiveBoxIconSolid },
-        { name: 'Créer un exercice', to: '/exercices/creation', icon: DocumentDuplicateIcon, iconSolid: DocumentDuplicateIconSolid },
-      ]
-    },
-    {
-      category: 'Statistiques',
-      items: [
-        { name: 'Statistiques', to: '/statistiques', icon: PresentationChartLineIcon, iconSolid: PresentationChartLineIconSolid },
-        { name: 'Suggestions IA', to: '/suggestions', icon: LightBulbIcon, iconSolid: LightBulbIconSolid },
-      ]
-    }
-  ], [])
+// Navigation pour admin
+const adminNavigation = useMemo(() => [
+  {
+    category: 'Principal',
+    items: [
+      { name: 'Dashboard', to: '/dashboard', icon: Squares2X2Icon, iconSolid: Squares2X2IconSolid },
+      { name: 'Mon profil', to: '/profil', icon: UserIcon, iconSolid: UserIconSolid },
+      { name: 'Paramètres', to: '/parametres', icon: Cog6ToothIcon, iconSolid: Cog6ToothIconSolid },
+      { name: 'Notifications', to: '/notifications', icon: BellIcon, iconSolid: BellIconSolid },
+      { name: 'Calendrier', to: '/calendrier', icon: CalendarIcon, iconSolid: CalendarIconSolid },
+      { name: 'Chat', to: '/chat', icon: ChatBubbleLeftRightIcon, iconSolid: ChatBubbleLeftRightIconSolid },
+    ]
+  },
+  {
+    category: 'Gestion des utilisateurs',
+    items: [
+      { name: 'Tous les utilisateurs', to: '/utilisateurs', icon: UsersIcon, iconSolid: UsersIconSolid },
+      { name: 'Étudiants', to: '/utilisateurs?role=etudiant', icon: AcademicCapIcon, iconSolid: AcademicCapIconSolid },
+      { name: 'Professeurs', to: '/utilisateurs?role=professeur', icon: UserGroupIcon, iconSolid: UserGroupIconSolid },
+      { name: 'Administrateurs', to: '/utilisateurs?role=admin', icon: ShieldCheckIcon, iconSolid: ShieldCheckIconSolid },
+    ]
+  },
+  {
+    category: 'Validations',
+    items: [
+      {
+        name: 'Professeurs à valider',
+        to: '/admin/validations',
+        icon: ClockIcon,
+        iconSolid: ClockIconSolid,
+        badge: pendingCount
+      },
+    ]
+  },
+  {
+    category: 'Gestion académique',
+    items: [
+      { name: 'Classes', to: '/classes', icon: BuildingOfficeIcon, iconSolid: BuildingOfficeIconSolid },
+      { name: 'Matières', to: '/matieres', icon: BookOpenIcon, iconSolid: BookOpenIconSolid },
+      { name: 'Notes', to: '/notes', icon: DocumentTextIcon, iconSolid: DocumentTextIconSolid },
+      { name: 'Exercices', to: '/exercices', icon: FolderIcon, iconSolid: FolderIconSolid },
+      { name: 'Ressources', to: '/admin/ressources', icon: ArchiveBoxIcon, iconSolid: ArchiveBoxIconSolid }, // ← MODIFIÉ
+    ]
+  },
+  {
+    category: 'Statistiques',
+    items: [
+      { name: 'Statistiques globales', to: '/statistiques', icon: PresentationChartLineIcon, iconSolid: PresentationChartLineIconSolid },
+      { name: 'Suggestions IA', to: '/suggestions', icon: LightBulbIcon, iconSolid: LightBulbIconSolid },
+      { name: 'Logs système', to: '/logs', icon: ClockIcon, iconSolid: ClockIconSolid },
+    ]
+  }
+], [pendingCount])
 
-  // Navigation pour étudiant
-  const studentNavigation = useMemo(() => [
-    {
-      category: 'Principal',
-      items: [
-        { name: 'Dashboard', to: '/dashboard', icon: Squares2X2Icon, iconSolid: Squares2X2IconSolid },
-        { name: 'Mon profil', to: '/profil', icon: UserIcon, iconSolid: UserIconSolid },
-        { name: 'Paramètres', to: '/parametres', icon: Cog6ToothIcon, iconSolid: Cog6ToothIconSolid },
-        { name: 'Notifications', to: '/notifications', icon: BellIcon, iconSolid: BellIconSolid },
-        { name: 'Calendrier', to: '/calendrier', icon: CalendarIcon, iconSolid: CalendarIconSolid },
-        { name: 'Chat', to: '/chat', icon: ChatBubbleLeftRightIcon, iconSolid: ChatBubbleLeftRightIconSolid },
-      ]
-    },
-    {
-      category: 'Académique',
-      items: [
-        { name: 'Mes notes', to: '/notes', icon: DocumentTextIcon, iconSolid: DocumentTextIconSolid },
-        { name: 'Exercices', to: '/exercices', icon: FolderIcon, iconSolid: FolderIconSolid },
-        { name: 'Ressources', to: '/ressources', icon: ArchiveBoxIcon, iconSolid: ArchiveBoxIconSolid },
-        { name: 'Suggestions IA', to: '/suggestions', icon: LightBulbIcon, iconSolid: LightBulbIconSolid },
-        { name: 'Statistiques', to: '/statistiques', icon: PresentationChartLineIcon, iconSolid: PresentationChartLineIconSolid },
-      ]
-    }
-  ], [])
+// Navigation pour professeur
+const professorNavigation = useMemo(() => [
+  {
+    category: 'Principal',
+    items: [
+      { name: 'Dashboard', to: '/dashboard', icon: Squares2X2Icon, iconSolid: Squares2X2IconSolid },
+      { name: 'Mon profil', to: '/profil', icon: UserIcon, iconSolid: UserIconSolid },
+      { name: 'Paramètres', to: '/parametres', icon: Cog6ToothIcon, iconSolid: Cog6ToothIconSolid },
+      { name: 'Notifications', to: '/notifications', icon: BellIcon, iconSolid: BellIconSolid },
+      { name: 'Calendrier', to: '/calendrier', icon: CalendarIcon, iconSolid: CalendarIconSolid },
+      { name: 'Chat', to: '/chat', icon: ChatBubbleLeftRightIcon, iconSolid: ChatBubbleLeftRightIconSolid },
+    ]
+  },
+  {
+    category: 'Gestion',
+    items: [
+      { name: 'Étudiants', to: '/etudiants', icon: UserGroupIcon, iconSolid: UserGroupIconSolid },
+      { name: 'Notes', to: '/notes', icon: DocumentTextIcon, iconSolid: DocumentTextIconSolid },
+      { name: 'Saisie des notes', to: '/notes/saisie', icon: PencilSquareIcon, iconSolid: PencilSquareIconSolid },
+      { name: 'Exercices', to: '/exercices', icon: FolderIcon, iconSolid: FolderIconSolid },
+      { name: 'Ressources', to: '/professeur/ressources', icon: ArchiveBoxIcon, iconSolid: ArchiveBoxIconSolid }, // ← MODIFIÉ
+      { name: 'Créer un exercice', to: '/exercices/creation', icon: DocumentDuplicateIcon, iconSolid: DocumentDuplicateIconSolid },
+    ]
+  },
+  {
+    category: 'Statistiques',
+    items: [
+      { name: 'Statistiques', to: '/statistiques', icon: PresentationChartLineIcon, iconSolid: PresentationChartLineIconSolid },
+      { name: 'Suggestions IA', to: '/suggestions', icon: LightBulbIcon, iconSolid: LightBulbIconSolid },
+    ]
+  }
+], [])
+
+// Navigation pour étudiant
+const studentNavigation = useMemo(() => [
+  {
+    category: 'Principal',
+    items: [
+      { name: 'Dashboard', to: '/dashboard', icon: Squares2X2Icon, iconSolid: Squares2X2IconSolid },
+      { name: 'Mon profil', to: '/profil', icon: UserIcon, iconSolid: UserIconSolid },
+      { name: 'Paramètres', to: '/parametres', icon: Cog6ToothIcon, iconSolid: Cog6ToothIconSolid },
+      { name: 'Notifications', to: '/notifications', icon: BellIcon, iconSolid: BellIconSolid },
+      { name: 'Calendrier', to: '/calendrier', icon: CalendarIcon, iconSolid: CalendarIconSolid },
+      { name: 'Chat', to: '/chat', icon: ChatBubbleLeftRightIcon, iconSolid: ChatBubbleLeftRightIconSolid },
+    ]
+  },
+  {
+    category: 'Académique',
+    items: [
+      { name: 'Mes notes', to: '/notes', icon: DocumentTextIcon, iconSolid: DocumentTextIconSolid },
+      { name: 'Exercices', to: '/exercices', icon: FolderIcon, iconSolid: FolderIconSolid },
+      { name: 'Ressources', to: '/etudiant/ressources', icon: ArchiveBoxIcon, iconSolid: ArchiveBoxIconSolid }, // ← MODIFIÉ
+      { name: 'Suggestions IA', to: '/suggestions', icon: LightBulbIcon, iconSolid: LightBulbIconSolid },
+      { name: 'Statistiques', to: '/statistiques', icon: PresentationChartLineIcon, iconSolid: PresentationChartLineIconSolid },
+    ]
+  }
+], [])
 
   const navigationSections = useMemo(() => {
     if (user?.role === 'admin') return adminNavigation

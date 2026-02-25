@@ -1,4 +1,4 @@
-# 🚀 E-Suivi (Shadow-404_HACKBYIFRI_2026)
+# 🚀AcademicTwins (by Shadow-404_HACKBYIFRI_2026)
 
 Bienvenue sur le dépôt de notre projet ! Cette application web est construite avec une architecture découplée (Frontend React et Backend Django).
 

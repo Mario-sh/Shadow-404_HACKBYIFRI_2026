@@ -305,7 +305,7 @@ Ce projet a été réalisé dans le cadre du **HACKBYIFRI 2026**.
 
 <div align="center">
 
-**[🌐 Voir la démo live](https://academictwins.vercel.app/)** · **[⚡ API Backend](https://shadow-404-hackbyifri-2026-iepp.onrender.com)** · **[🎬 Vidéo démo](LIEN_GOOGLE_DRIVE_ICI)** · **[⭐ Star le repo](https://github.com/Mario-sh/Shadow-404_HACKBYIFRI_2026)**
+**[🌐 Voir la démo live](https://academictwins.vercel.app/)** · **[⚡ API Backend](https://shadow-404-hackbyifri-2026-iepp.onrender.com)** · **[🎬 Vidéo démo](https://drive.google.com/file/d/1UNWSdpm4J3nbN0Jvv6qXt4kg9RAV2Wk9/view?usp=drivesdk)** · **[⭐ Star le repo](https://github.com/Mario-sh/Shadow-404_HACKBYIFRI_2026)**
 
 <br/>
 

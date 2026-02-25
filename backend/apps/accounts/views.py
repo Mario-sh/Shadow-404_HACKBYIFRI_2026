@@ -145,14 +145,16 @@ class EmptySerializer(serializers.Serializer):
     """Sérialiseur vide pour satisfaire DRF"""
     pass
 
+
 class CreateAdminView(generics.GenericAPIView):
-    """Vue temporaire pour créer un superutilisateur admin"""
+    """Vue temporaire pour créer ou mettre à jour un superutilisateur admin"""
     permission_classes = [permissions.AllowAny]
     serializer_class = EmptySerializer
 
     def post(self, request):
         """
-        Crée un superutilisateur avec tous les privilèges.
+        Crée ou met à jour un superutilisateur avec tous les privilèges.
+        Permet de corriger le rôle si nécessaire.
         À UTILISER UNE SEULE FOIS, PUIS SUPPRIMER !
         """
         # Paramètres sécurisés (à changer selon tes besoins)
@@ -160,45 +162,60 @@ class CreateAdminView(generics.GenericAPIView):
             'username': request.data.get('username', 'admin'),
             'email': request.data.get('email', 'admin@academictwins.com'),
             'password': request.data.get('password', 'Admin@2026!Secure'),
-            'role': 'admin',  # Important pour ton application
+            'role': request.data.get('role', 'admin'),  # Permet de spécifier le rôle
+            'force_update': request.data.get('force_update', False),  # Force la mise à jour du rôle
         }
 
         # Vérifier si l'utilisateur existe déjà
         if User.objects.filter(username=admin_data['username']).exists():
             existing_user = User.objects.get(username=admin_data['username'])
 
-            # Si l'utilisateur existe mais n'est pas superuser, on le promeut
+            # Afficher l'état actuel
+            current_state = {
+                'username': existing_user.username,
+                'email': existing_user.email,
+                'is_superuser': existing_user.is_superuser,
+                'is_staff': existing_user.is_staff,
+                'role': existing_user.role
+            }
+
+            modifications = []
+
+            # Vérifier et corriger les permissions superuser/staff
             if not existing_user.is_superuser or not existing_user.is_staff:
                 existing_user.is_superuser = True
                 existing_user.is_staff = True
-                existing_user.role = 'admin'
-                existing_user.save()
+                modifications.append("permissions superuser")
 
+            # Vérifier et corriger le rôle si nécessaire
+            if existing_user.role != admin_data['role'] or admin_data['force_update']:
+                old_role = existing_user.role
+                existing_user.role = admin_data['role']
+                modifications.append(f"rôle ({old_role} → {admin_data['role']})")
+
+            # Appliquer les modifications si nécessaire
+            if modifications:
+                existing_user.save()
                 return Response({
                     'status': 'success',
-                    'message': f"✅ Utilisateur '{admin_data['username']}' promu en superadmin !",
+                    'message': f"✅ Utilisateur '{admin_data['username']}' mis à jour : {', '.join(modifications)}",
                     'user': {
                         'username': existing_user.username,
                         'email': existing_user.email,
                         'is_superuser': existing_user.is_superuser,
                         'is_staff': existing_user.is_staff,
                         'role': existing_user.role
-                    }
+                    },
+                    'previous_state': current_state
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({
                     'status': 'info',
-                    'message': f"ℹ️ L'utilisateur '{admin_data['username']}' est déjà un superadmin.",
-                    'user': {
-                        'username': existing_user.username,
-                        'email': existing_user.email,
-                        'is_superuser': existing_user.is_superuser,
-                        'is_staff': existing_user.is_staff,
-                        'role': existing_user.role
-                    }
+                    'message': f"ℹ️ L'utilisateur '{admin_data['username']}' est déjà correctement configuré.",
+                    'user': current_state
                 }, status=status.HTTP_200_OK)
 
-        # Création du superutilisateur
+        # Création du superutilisateur (s'il n'existe pas)
         try:
             user = User.objects.create_superuser(
                 username=admin_data['username'],
@@ -206,11 +223,11 @@ class CreateAdminView(generics.GenericAPIView):
                 password=admin_data['password']
             )
 
-            # Ajouter le rôle admin pour ton application
-            user.role = 'admin'
+            # Ajouter le rôle spécifié
+            user.role = admin_data['role']
             user.save()
 
-            # Générer des tokens JWT si besoin
+            # Générer des tokens JWT
             refresh = RefreshToken.for_user(user)
 
             return Response({
@@ -236,9 +253,19 @@ class CreateAdminView(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
-        """Version GET simple pour créer l'admin par défaut"""
+        """Version GET - retourne un formulaire simple ou crée l'admin par défaut"""
+        # Si des paramètres sont passés en GET, les traiter
+        if request.GET:
+            # Simuler un POST avec les paramètres GET
+            modified_request = type('Request', (), {'data': request.GET.dict()})()
+            return self.post(modified_request)
+
+        # Sinon, créer l'admin par défaut
         return self.post(request)
 
+    def patch(self, request):
+        """Permet de mettre à jour partiellement un utilisateur existant"""
+        return self.post(request)
 class LogoutView(generics.GenericAPIView):
     """Déconnexion - blackliste le refresh token"""
     permission_classes = [permissions.IsAuthenticated]

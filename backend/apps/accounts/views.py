@@ -6,7 +6,8 @@ from django.utils import timezone
 from datetime import date
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, UserUpdateSerializer
 from apps.academic.models import Etudiant, Classe
-
+from django.contrib.auth import get_user_model
+from django.http import JsonResponse
 User = get_user_model()
 
 
@@ -139,6 +140,17 @@ class LoginView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
+
+def create_admin(request):
+    User = get_user_model()
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser(
+            username='admin',
+            email='admin@academictwins.com',
+            password='Admin@2026!Secure'
+        )
+        return JsonResponse({"message": "Admin créé"})
+    return JsonResponse({"message": "Admin existe déjà"})
 
 class LogoutView(generics.GenericAPIView):
     """Déconnexion - blackliste le refresh token"""

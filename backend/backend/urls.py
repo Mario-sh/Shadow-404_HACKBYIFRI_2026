@@ -3,8 +3,7 @@ from django.urls import path, include
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
-from apps.accounts.views import create_admin  # ← AJOUTEZ CET IMPORT
-
+from apps.accounts.views import CreateAdminView  # ← CORRECT
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -18,8 +17,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('create-admin/', create_admin),  # ← AJOUTEZ CETTE LIGNE
-
+    path('create-admin/', CreateAdminView.as_view(), name='create-admin'),
     path('admin/', admin.site.urls),
     path('api/auth/', include('apps.accounts.urls')),
     path('api/academic/', include('apps.academic.urls')),

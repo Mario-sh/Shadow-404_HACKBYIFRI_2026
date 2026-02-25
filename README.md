@@ -258,7 +258,7 @@ npm run dev
 ## 🤝 Contribuer
 
 ```bash
-# 1. Toujours partir d'une branche à jour
+# 1. Toujours partir d'une branche à jour.
 git checkout main && git pull origin main
 
 # 2. Créer une branche dédiée
@@ -283,7 +283,7 @@ git push origin feature/ma-fonctionnalite
 
 | | Nom | Rôle | École |
 |:--:|-----|------|-------|
-| 👑 | **Dylane LOKOSSOU SOTON** | Chef de groupe | ESGIS — L2 |
+| 👑 | **Dylane Mario LOKOSSOU SOTON** | Chef de groupe | ESGIS — L2 |
 | 💻 | **Adéliyi ARIORI O.** | Développeur | ESGIS — L2 |
 | 💻 | **Melris ZOHOUN** | Développeur | ESGIS — L2 |
 | 💻 | **Ezechiel HOUNKPE** | Développeur | ESGIS — L2 |

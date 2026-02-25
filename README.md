@@ -309,6 +309,6 @@ Ce projet a été réalisé dans le cadre du **HACKBYIFRI 2026**.
 
 <br/>
 
-Fait avec ❤️ par **Shadow-404** — ESGIS Bénin 🇧🇯
+Fait avec ❤️ par **Shadow-404** — ESGIS Bénin | 2026
 
 </div>

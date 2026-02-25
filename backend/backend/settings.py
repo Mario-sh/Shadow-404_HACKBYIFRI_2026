@@ -159,7 +159,7 @@ else:
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = os.environ.get(
         'CORS_ALLOWED_ORIGINS',
-        'http://localhost:3000,http://localhost:5173,https://votre-frontend.vercel.app'
+        'http://localhost:3000,http://localhost:5173,https://academictwins.vercel.app/'
     ).split(',')
 
 # ============================================

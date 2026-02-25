@@ -1,11 +1,16 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import date
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, UserUpdateSerializer
 from apps.academic.models import Etudiant, Classe
+import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+django.setup()
+
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 User = get_user_model()
@@ -141,38 +146,36 @@ class LoginView(generics.GenericAPIView):
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
-# backend/apps/accounts/views.py
-from django.contrib.auth import get_user_model
-from django.http import JsonResponse
+# backend/create_real_admin.py
 
 
-def create_admin(request):
-    """
-    Vue temporaire pour créer un administrateur.
-    À SUPPRIMER APRÈS UTILISATION !
-    """
-    User = get_user_model()
+User = get_user_model()
 
-    # Paramètres de l'admin
-    username = "admin"
-    email = "admin@academictwins.com"
-    password = "Admin@2026!Secure"  # Changez ce mot de passe !
-
-    if not User.objects.filter(username=username).exists():
-        User.objects.create_superuser(
-            username=username,
-            email=email,
-            password=password
-        )
-        return JsonResponse({
-            "status": "success",
-            "message": f"✅ Superutilisateur '{username}' créé avec succès !"
-        })
+# Supprime l'ancien 'admin' s'il existe et que ce n'est pas un superuser
+try:
+    old_admin = User.objects.get(username='admin')
+    if not old_admin.is_superuser:
+        print(f"🗑️ Suppression de l'ancien utilisateur 'admin' (pas superuser)...")
+        old_admin.delete()
+        print("✅ Ancien utilisateur supprimé.")
     else:
-        return JsonResponse({
-            "status": "info",
-            "message": f"ℹ️ L'utilisateur '{username}' existe déjà."
-        })
+        print("✅ L'utilisateur 'admin' est déjà un superuser.")
+        exit()
+except User.DoesNotExist:
+    pass
+
+# Crée le vrai superutilisateur
+username = "admin"
+email = "admin@academictwins.com"
+password = "Admin@2026!Secure"  # Change ce mot de passe !
+
+User.objects.create_superuser(
+    username=username,
+    email=email,
+    password=password
+)
+print(f"✅ SUPERUSER '{username}' créé avec succès !")
+print(f"👑 Privilèges : Superuser = True, Staff = True")
 
 class LogoutView(generics.GenericAPIView):
     """Déconnexion - blackliste le refresh token"""

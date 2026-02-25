@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: Shadow-404_HACKBYIFRI_2026
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn backend.wsgi:application
+    preDeployCommand: python manage.py migrate  # ou releaseCommand

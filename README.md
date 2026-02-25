@@ -21,6 +21,7 @@
 
 [![🌐 Demo Live](https://img.shields.io/badge/🌐%20DEMO%20LIVE-academictwins.vercel.app-2E75B6?style=for-the-badge&labelColor=1F4E79)](https://academictwins.vercel.app/)
 [![⚡ API Backend](https://img.shields.io/badge/⚡%20API%20BACKEND-onrender.com-00C851?style=for-the-badge&labelColor=1a6b3a)](https://shadow-404-hackbyifri-2026-iepp.onrender.com)
+[![🎬 Vidéo Démo](https://img.shields.io/badge/🎬%20VIDÉO%20DÉMO-Google%20Drive-EA4335?style=for-the-badge&labelColor=7a1a1a)](LIEN_GOOGLE_DRIVE_ICI)
 
 <br/>
 
@@ -52,14 +53,14 @@
 
 ---
 
-## 🚀 Demo
+## 🚀 Liens
 
 <div align="center">
 
-| 🌐 Application web | ⚡ API REST |
-|:------------------:|:-----------:|
-| **[academictwins.vercel.app](https://academictwins.vercel.app/)** | **[Backend sur Render](https://shadow-404-hackbyifri-2026-iepp.onrender.com)** |
-| Frontend déployé sur Vercel | Django REST Framework |
+| 🌐 Application web | ⚡ API REST | 🎬 Vidéo de présentation |
+|:------------------:|:-----------:|:------------------------:|
+| **[academictwins.vercel.app](https://academictwins.vercel.app/)** | **[Backend sur Render](https://shadow-404-hackbyifri-2026-iepp.onrender.com)** | **[Voir sur Google Drive](LIEN_GOOGLE_DRIVE_ICI)** |
+| Frontend React + Vite | Django REST Framework | Démo complète du projet |
 
 </div>
 
@@ -304,7 +305,7 @@ Ce projet a été réalisé dans le cadre du **HACKBYIFRI 2026**.
 
 <div align="center">
 
-**[🌐 Voir la démo live](https://academictwins.vercel.app/)** · **[⚡ API Backend](https://shadow-404-hackbyifri-2026-iepp.onrender.com)** · **[⭐ Star le repo](https://github.com/Mario-sh/Shadow-404_HACKBYIFRI_2026)**
+**[🌐 Voir la démo live](https://academictwins.vercel.app/)** · **[⚡ API Backend](https://shadow-404-hackbyifri-2026-iepp.onrender.com)** · **[🎬 Vidéo démo](LIEN_GOOGLE_DRIVE_ICI)** · **[⭐ Star le repo](https://github.com/Mario-sh/Shadow-404_HACKBYIFRI_2026)**
 
 <br/>
 

@@ -141,6 +141,38 @@ class LoginView(generics.GenericAPIView):
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
+# backend/apps/accounts/views.py
+from django.contrib.auth import get_user_model
+from django.http import JsonResponse
+
+
+def create_admin(request):
+    """
+    Vue temporaire pour créer un administrateur.
+    À SUPPRIMER APRÈS UTILISATION !
+    """
+    User = get_user_model()
+
+    # Paramètres de l'admin
+    username = "admin"
+    email = "admin@academictwins.com"
+    password = "Admin@2026!Secure"  # Changez ce mot de passe !
+
+    if not User.objects.filter(username=username).exists():
+        User.objects.create_superuser(
+            username=username,
+            email=email,
+            password=password
+        )
+        return JsonResponse({
+            "status": "success",
+            "message": f"✅ Superutilisateur '{username}' créé avec succès !"
+        })
+    else:
+        return JsonResponse({
+            "status": "info",
+            "message": f"ℹ️ L'utilisateur '{username}' existe déjà."
+        })
 
 class LogoutView(generics.GenericAPIView):
     """Déconnexion - blackliste le refresh token"""

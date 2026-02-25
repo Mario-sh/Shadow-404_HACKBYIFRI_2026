@@ -1,22 +1,22 @@
-from rest_framework import generics, permissions, status,serializers
+from rest_framework import generics, permissions, status, serializers
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import date
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, UserUpdateSerializer
 from apps.academic.models import Etudiant, Classe
-from django.contrib.auth import get_user_model
 from django.http import JsonResponse
-User = get_user_model()
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status, permissions
+import os
 import sys
+import threading
+import logging
 from io import StringIO
 import contextlib
 
-from .populate_utils import (  # On va créer ce fichier
+# Import des fonctions de peuplement
+from .populate_utils import (
     create_users, create_classes, create_matieres,
     create_administrateurs, create_exercices, create_ressources,
     create_notes, create_suggestions, create_events,
@@ -24,76 +24,122 @@ from .populate_utils import (  # On va créer ce fichier
     print_header, print_success, print_info, print_warning
 )
 
+User = get_user_model()
+
+# Configuration du logger
+logger = logging.getLogger(__name__)
+
+# Variable globale pour suivre l'état du script
+script_running = False
+
+
+# ============================================
+# VUE DE PEUPLEMENT (ARRIÈRE-PLAN)
+# ============================================
+
+def run_populate_script():
+    """Fonction exécutée en arrière-plan"""
+    global script_running
+    script_running = True
+
+    try:
+        logger.info("=" * 60)
+        logger.info(" DÉBUT DU SCRIPT DE PEUPLEMENT (ARRIÈRE-PLAN)")
+        logger.info("=" * 60)
+
+        # Exécuter toutes les fonctions de peuplement
+        users_created = create_users()
+        classes_created = create_classes()
+        matieres_created = create_matieres()
+        admins_created = create_administrateurs()
+        exercices_created = create_exercices()
+        ressources_created = create_ressources()
+        notes_created = create_notes()
+        suggestions_created = create_suggestions()
+        events_created = create_events()
+        notifs_created = create_notifications()
+        logs_created = create_logs()
+        stats_created = create_stats_apprentissage()
+
+        # Résumé
+        logger.info("=" * 60)
+        logger.info(" RÉSUMÉ DU PEUPLEMENT")
+        logger.info("=" * 60)
+        logger.info(f"👥 Utilisateurs créés: {users_created}")
+        logger.info(f"🏫 Classes créées: {classes_created}")
+        logger.info(f"📚 Matières créées: {matieres_created}")
+        logger.info(f"👑 Admins créés: {admins_created}")
+        logger.info(f"📝 Exercices créés: {exercices_created}")
+        logger.info(f"📁 Ressources créées: {ressources_created}")
+        logger.info(f"📊 Notes créées: {notes_created}")
+        logger.info(f"🤖 Suggestions IA créées: {suggestions_created}")
+        logger.info(f"📅 Événements créés: {events_created}")
+        logger.info(f"🔔 Notifications créées: {notifs_created}")
+        logger.info(f"📋 Logs créés: {logs_created}")
+        logger.info(f"📈 Stats apprentissage créées: {stats_created}")
+        logger.info("=" * 60)
+        logger.info(" SCRIPT TERMINÉ AVEC SUCCÈS")
+        logger.info("=" * 60)
+
+    except Exception as e:
+        logger.error(f"❌ ERREUR DANS LE SCRIPT: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+
+    finally:
+        script_running = False
+
 
 class PopulateDatabaseView(APIView):
     """
     Endpoint pour peupler la base de données avec des données de test.
-    PROTÉGÉ PAR UN TOKEN SECRET - À SUPPRIMER APRÈS USAGE !
+    Le script s'exécute en arrière-plan pour éviter le timeout.
     """
-    permission_classes = [permissions.AllowAny]  # Temporaire, mais protégé par token
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        """Version GET - simple confirmation"""
+        """Version GET - simple confirmation et statut"""
         return Response({
-            'message': 'Utilisez POST pour exécuter le script de peuplement',
-            'instruction': 'Inclure le header X-POPULATE-TOKEN avec le bon secret'
+            'message': 'Utilisez POST pour lancer le script de peuplement',
+            'instruction': 'Inclure le header X-POPULATE-TOKEN avec le bon secret',
+            'script_running': script_running
         })
 
     def post(self, request):
-        # Vérification du token secret (protège l'accès public)
+        global script_running
+
+        # Vérification du token secret
         token = request.headers.get('X-POPULATE-TOKEN') or request.data.get('secret_token')
-        if token != "ACADEMIC_TWINS_POPULATE_2026":
+        expected_token = os.environ.get('POPULATE_SECRET_TOKEN', 'ACADEMIC_TWINS_POPULATE_2026')
+
+        if token != expected_token:
             return Response({
                 'error': 'Token invalide. Accès non autorisé.'
             }, status=status.HTTP_403_FORBIDDEN)
 
-        # Capturer la sortie console
-        output = StringIO()
-
-        try:
-            with contextlib.redirect_stdout(output):
-                # Exécuter toutes les fonctions de peuplement
-                users_created = create_users()
-                classes_created = create_classes()
-                matieres_created = create_matieres()
-                admins_created = create_administrateurs()
-                exercices_created = create_exercices()
-                ressources_created = create_ressources()
-                notes_created = create_notes()
-                suggestions_created = create_suggestions()
-                events_created = create_events()
-                notifs_created = create_notifications()
-                logs_created = create_logs()
-                stats_created = create_stats_apprentissage()
-
-            # Résumé
-            result = {
-                'success': True,
-                'message': 'Base de données peuplée avec succès',
-                'stats': {
-                    'users_created': users_created,
-                    'classes_created': classes_created,
-                    'matieres_created': matieres_created,
-                    'admins_created': admins_created,
-                    'exercices_created': exercices_created,
-                    'ressources_created': ressources_created,
-                    'notes_created': notes_created,
-                    'suggestions_created': suggestions_created,
-                    'events_created': events_created,
-                    'notifications_created': notifs_created,
-                    'logs_created': logs_created,
-                    'stats_apprentissage_created': stats_created,
-                },
-                'output': output.getvalue().split('\n')[-20:]  # Dernières 20 lignes
-            }
-            return Response(result, status=status.HTTP_200_OK)
-
-        except Exception as e:
+        # Vérifier si un script est déjà en cours
+        if script_running:
             return Response({
-                'success': False,
-                'error': str(e),
-                'output': output.getvalue().split('\n')[-20:]
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                'message': 'Un script de peuplement est déjà en cours d\'exécution',
+                'script_running': True
+            }, status=status.HTTP_409_CONFLICT)
+
+        # Lancer le script dans un thread séparé
+        thread = threading.Thread(target=run_populate_script)
+        thread.daemon = True
+        thread.start()
+
+        return Response({
+            'message': '✅ Script de peuplement lancé en arrière-plan',
+            'status': 'en cours',
+            'script_running': True,
+            'info': 'Consulte les logs Render pour suivre la progression'
+        }, status=status.HTTP_202_ACCEPTED)
+
+
+# ============================================
+# VUES D'AUTHENTIFICATION
+# ============================================
 
 class RegisterView(generics.CreateAPIView):
     """Inscription d'un nouvel utilisateur avec création automatique de l'étudiant"""
@@ -105,44 +151,32 @@ class RegisterView(generics.CreateAPIView):
         print("=== DÉBUT INSCRIPTION ===")
         print(f"Données reçues: {request.data}")
 
-        # Utiliser le sérialiseur normalement
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Sauvegarder l'utilisateur
         user = serializer.save()
         print(f"✅ Utilisateur créé: {user.username} (ID: {user.id}, Rôle: {user.role})")
 
-        # Si c'est un étudiant, créer automatiquement l'entrée dans la table etudiant
         if user.role == 'etudiant':
             try:
                 print("🎓 Création de l'étudiant associé...")
 
-                # Trouver la classe correspondante à partir de la filière et du niveau
                 classe = None
                 if user.filiere and user.niveau:
                     print(f"Recherche classe pour: {user.filiere} - {user.niveau}")
-
-                    # Chercher une classe qui correspond à la filière et au niveau
-                    classes = Classe.objects.filter(
-                        niveau__icontains=user.niveau
-                    )
-
+                    classes = Classe.objects.filter(niveau__icontains=user.niveau)
                     print(f"Classes trouvées pour le niveau {user.niveau}: {classes.count()}")
 
-                    # Filtrer par filière dans le nom de la classe
                     for c in classes:
                         if user.filiere.lower() in c.nom_class.lower():
                             classe = c
                             print(f"✅ Classe trouvée: {c.nom_class}")
                             break
 
-                    # Si pas trouvé, prendre la première classe du niveau
                     if not classe and classes.exists():
                         classe = classes.first()
                         print(f"⚠️ Classe par défaut: {classe.nom_class}")
 
-                # Extraire le nom et prénom à partir duusername
                 username = user.username
                 prenom = ""
                 nom = ""
@@ -156,25 +190,20 @@ class RegisterView(generics.CreateAPIView):
                     prenom = parts[0].capitalize()
                     nom = parts[1].capitalize() if len(parts) > 1 else ""
                 else:
-                    # Si pas de séparateur, prendre tout leusername comme nom
                     nom = username.capitalize()
                     prenom = ""
 
                 print(f"Nom extrait: {nom}, Prénom extrait: {prenom}")
 
-                # Générer un matricule si non fourni
                 matricule = user.numero_etudiant
                 if not matricule:
-                    # Format: ANNEE + ID (ex: 2026001)
                     annee = str(timezone.now().year)
                     matricule = f"{annee}{user.id:04d}"
                     print(f"Matricule généré: {matricule}")
 
-                # Vérifier si l'étudiant existe déjà
                 if Etudiant.objects.filter(user=user).exists():
                     print("⚠️ Un étudiant existe déjà pour cet utilisateur")
                 else:
-                    # Créer l'étudiant
                     etudiant = Etudiant.objects.create(
                         matricule=matricule,
                         nom=nom,
@@ -184,7 +213,6 @@ class RegisterView(generics.CreateAPIView):
                         classe=classe,
                         user=user
                     )
-
                     print(f"✅ Étudiant créé avec succès!")
                     print(f"   ID: {etudiant.id_student}")
                     print(f"   Nom: {etudiant.prenom} {etudiant.nom}")
@@ -198,15 +226,11 @@ class RegisterView(generics.CreateAPIView):
         else:
             print(f"👤 Rôle {user.role} - Pas de création d'étudiant")
 
-        # Générer les tokens JWT
         refresh = RefreshToken.for_user(user)
-
-        # Sérialiser l'utilisateur pour la réponse
         user_serializer = UserSerializer(user)
 
         print("=== FIN INSCRIPTION ===\n")
 
-        # Retourner la réponse complète
         return Response({
             'user': user_serializer.data,
             'refresh': str(refresh),
@@ -236,25 +260,16 @@ class CreateAdminView(generics.GenericAPIView):
     serializer_class = EmptySerializer
 
     def post(self, request):
-        """
-        Crée ou met à jour un superutilisateur avec tous les privilèges.
-        Permet de corriger le rôle si nécessaire.
-        À UTILISER UNE SEULE FOIS, PUIS SUPPRIMER !
-        """
-        # Paramètres sécurisés (à changer selon tes besoins)
         admin_data = {
             'username': request.data.get('username', 'admin'),
             'email': request.data.get('email', 'admin@academictwins.com'),
             'password': request.data.get('password', 'Admin@2026!Secure'),
-            'role': request.data.get('role', 'admin'),  # Permet de spécifier le rôle
-            'force_update': request.data.get('force_update', False),  # Force la mise à jour du rôle
+            'role': request.data.get('role', 'admin'),
+            'force_update': request.data.get('force_update', False),
         }
 
-        # Vérifier si l'utilisateur existe déjà
         if User.objects.filter(username=admin_data['username']).exists():
             existing_user = User.objects.get(username=admin_data['username'])
-
-            # Afficher l'état actuel
             current_state = {
                 'username': existing_user.username,
                 'email': existing_user.email,
@@ -262,22 +277,18 @@ class CreateAdminView(generics.GenericAPIView):
                 'is_staff': existing_user.is_staff,
                 'role': existing_user.role
             }
-
             modifications = []
 
-            # Vérifier et corriger les permissions superuser/staff
             if not existing_user.is_superuser or not existing_user.is_staff:
                 existing_user.is_superuser = True
                 existing_user.is_staff = True
                 modifications.append("permissions superuser")
 
-            # Vérifier et corriger le rôle si nécessaire
             if existing_user.role != admin_data['role'] or admin_data['force_update']:
                 old_role = existing_user.role
                 existing_user.role = admin_data['role']
                 modifications.append(f"rôle ({old_role} → {admin_data['role']})")
 
-            # Appliquer les modifications si nécessaire
             if modifications:
                 existing_user.save()
                 return Response({
@@ -299,19 +310,15 @@ class CreateAdminView(generics.GenericAPIView):
                     'user': current_state
                 }, status=status.HTTP_200_OK)
 
-        # Création du superutilisateur (s'il n'existe pas)
         try:
             user = User.objects.create_superuser(
                 username=admin_data['username'],
                 email=admin_data['email'],
                 password=admin_data['password']
             )
-
-            # Ajouter le rôle spécifié
             user.role = admin_data['role']
             user.save()
 
-            # Générer des tokens JWT
             refresh = RefreshToken.for_user(user)
 
             return Response({
@@ -337,19 +344,15 @@ class CreateAdminView(generics.GenericAPIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
-        """Version GET - retourne un formulaire simple ou crée l'admin par défaut"""
-        # Si des paramètres sont passés en GET, les traiter
         if request.GET:
-            # Simuler un POST avec les paramètres GET
             modified_request = type('Request', (), {'data': request.GET.dict()})()
             return self.post(modified_request)
-
-        # Sinon, créer l'admin par défaut
         return self.post(request)
 
     def patch(self, request):
-        """Permet de mettre à jour partiellement un utilisateur existant"""
         return self.post(request)
+
+
 class LogoutView(generics.GenericAPIView):
     """Déconnexion - blackliste le refresh token"""
     permission_classes = [permissions.IsAuthenticated]
@@ -379,11 +382,9 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
-        # Si l'utilisateur est un étudiant, mettre à jour aussi la table etudiant
         if instance.role == 'etudiant':
             try:
                 etudiant = Etudiant.objects.get(user=instance)
-                # Mettre à jour les champs pertinents
                 if 'email' in request.data:
                     etudiant.email = request.data['email']
                 if 'telephone' in request.data:
@@ -402,11 +403,15 @@ class UserDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAdminUser]
 
 
-# Exporter toutes les vues
+# ============================================
+# EXPORT DES VUES
+# ============================================
 __all__ = [
     'RegisterView',
     'LoginView',
     'LogoutView',
     'ProfileView',
-    'UserDetailView'
+    'UserDetailView',
+    'PopulateDatabaseView',
+    'CreateAdminView'
 ]

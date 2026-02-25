@@ -9,7 +9,91 @@ from apps.academic.models import Etudiant, Classe
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 User = get_user_model()
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, permissions
+import sys
+from io import StringIO
+import contextlib
 
+from .populate_utils import (  # On va créer ce fichier
+    create_users, create_classes, create_matieres,
+    create_administrateurs, create_exercices, create_ressources,
+    create_notes, create_suggestions, create_events,
+    create_notifications, create_logs, create_stats_apprentissage,
+    print_header, print_success, print_info, print_warning
+)
+
+
+class PopulateDatabaseView(APIView):
+    """
+    Endpoint pour peupler la base de données avec des données de test.
+    PROTÉGÉ PAR UN TOKEN SECRET - À SUPPRIMER APRÈS USAGE !
+    """
+    permission_classes = [permissions.AllowAny]  # Temporaire, mais protégé par token
+
+    def get(self, request):
+        """Version GET - simple confirmation"""
+        return Response({
+            'message': 'Utilisez POST pour exécuter le script de peuplement',
+            'instruction': 'Inclure le header X-POPULATE-TOKEN avec le bon secret'
+        })
+
+    def post(self, request):
+        # Vérification du token secret (protège l'accès public)
+        token = request.headers.get('X-POPULATE-TOKEN') or request.data.get('secret_token')
+        if token != "ACADEMIC_TWINS_POPULATE_2026":
+            return Response({
+                'error': 'Token invalide. Accès non autorisé.'
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Capturer la sortie console
+        output = StringIO()
+
+        try:
+            with contextlib.redirect_stdout(output):
+                # Exécuter toutes les fonctions de peuplement
+                users_created = create_users()
+                classes_created = create_classes()
+                matieres_created = create_matieres()
+                admins_created = create_administrateurs()
+                exercices_created = create_exercices()
+                ressources_created = create_ressources()
+                notes_created = create_notes()
+                suggestions_created = create_suggestions()
+                events_created = create_events()
+                notifs_created = create_notifications()
+                logs_created = create_logs()
+                stats_created = create_stats_apprentissage()
+
+            # Résumé
+            result = {
+                'success': True,
+                'message': 'Base de données peuplée avec succès',
+                'stats': {
+                    'users_created': users_created,
+                    'classes_created': classes_created,
+                    'matieres_created': matieres_created,
+                    'admins_created': admins_created,
+                    'exercices_created': exercices_created,
+                    'ressources_created': ressources_created,
+                    'notes_created': notes_created,
+                    'suggestions_created': suggestions_created,
+                    'events_created': events_created,
+                    'notifications_created': notifs_created,
+                    'logs_created': logs_created,
+                    'stats_apprentissage_created': stats_created,
+                },
+                'output': output.getvalue().split('\n')[-20:]  # Dernières 20 lignes
+            }
+            return Response(result, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': str(e),
+                'output': output.getvalue().split('\n')[-20:]
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class RegisterView(generics.CreateAPIView):
     """Inscription d'un nouvel utilisateur avec création automatique de l'étudiant"""

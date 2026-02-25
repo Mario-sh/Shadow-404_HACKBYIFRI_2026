@@ -111,7 +111,7 @@ def create_users():
             defaults={
                 'email': prof_data['email'],
                 'role': 'professeur',
-                'telephone': f'+229 97 {random.randint(10, 99)} {random.randint(10, 99)} {random.randint(10, 99)}',
+                'telephone': f'+22997 {random.randint(10, 99)} {random.randint(10, 99)} {random.randint(10, 99)}',
                 'is_active': True,
             }
         )
@@ -161,7 +161,7 @@ def create_users():
                 'filiere': filiere,
                 'niveau': niveau,
                 'numero_etudiant': numero,
-                'telephone': f'+229 96 {random.randint(10, 99)} {random.randint(10, 99)} {random.randint(10, 99)}',
+                'telephone': f'+22996 {random.randint(10, 99)} {random.randint(10, 99)} {random.randint(10, 99)}',
                 'is_active': True,
             }
         )

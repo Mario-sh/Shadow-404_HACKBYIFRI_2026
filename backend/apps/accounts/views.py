@@ -1,18 +1,13 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import date
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, UserUpdateSerializer
 from apps.academic.models import Etudiant, Classe
-import os
-import django
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
-django.setup()
-
 from django.contrib.auth import get_user_model
-
+from django.http import JsonResponse
 User = get_user_model()
 
 
@@ -146,23 +141,98 @@ class LoginView(generics.GenericAPIView):
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
-# backend/promote_admin.py
+class CreateAdminView(generics.GenericAPIView):
+    """Vue temporaire pour créer un superutilisateur admin"""
+    permission_classes = [permissions.AllowAny]  # Temporaire, à sécuriser ou supprimer après usage
 
+    def post(self, request):
+        """
+        Crée un superutilisateur avec tous les privilèges.
+        À UTILISER UNE SEULE FOIS, PUIS SUPPRIMER !
+        """
+        # Paramètres sécurisés (à changer selon tes besoins)
+        admin_data = {
+            'username': request.data.get('username', 'admin'),
+            'email': request.data.get('email', 'admin@academictwins.com'),
+            'password': request.data.get('password', 'Admin@2026!Secure'),
+            'role': 'admin',  # Important pour ton application
+        }
 
-try:
-    user = User.objects.get(username='admin')
+        # Vérifier si l'utilisateur existe déjà
+        if User.objects.filter(username=admin_data['username']).exists():
+            existing_user = User.objects.get(username=admin_data['username'])
 
-    # Promouvoir en superadmin
-    user.is_superuser = True
-    user.is_staff = True
-    user.save()
+            # Si l'utilisateur existe mais n'est pas superuser, on le promeut
+            if not existing_user.is_superuser or not existing_user.is_staff:
+                existing_user.is_superuser = True
+                existing_user.is_staff = True
+                existing_user.role = 'admin'
+                existing_user.save()
 
-    print(f"✅ L'utilisateur '{user.username}' est maintenant SUPERADMIN !")
-    print(f"👑 is_superuser: {user.is_superuser}")
-    print(f"🔰 is_staff: {user.is_staff}")
+                return Response({
+                    'status': 'success',
+                    'message': f"✅ Utilisateur '{admin_data['username']}' promu en superadmin !",
+                    'user': {
+                        'username': existing_user.username,
+                        'email': existing_user.email,
+                        'is_superuser': existing_user.is_superuser,
+                        'is_staff': existing_user.is_staff,
+                        'role': existing_user.role
+                    }
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'status': 'info',
+                    'message': f"ℹ️ L'utilisateur '{admin_data['username']}' est déjà un superadmin.",
+                    'user': {
+                        'username': existing_user.username,
+                        'email': existing_user.email,
+                        'is_superuser': existing_user.is_superuser,
+                        'is_staff': existing_user.is_staff,
+                        'role': existing_user.role
+                    }
+                }, status=status.HTTP_200_OK)
 
-except User.DoesNotExist:
-    print("❌ Utilisateur 'admin' non trouvé.")
+        # Création du superutilisateur
+        try:
+            user = User.objects.create_superuser(
+                username=admin_data['username'],
+                email=admin_data['email'],
+                password=admin_data['password']
+            )
+
+            # Ajouter le rôle admin pour ton application
+            user.role = 'admin'
+            user.save()
+
+            # Générer des tokens JWT si besoin
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                'status': 'success',
+                'message': f"✅ Superutilisateur '{admin_data['username']}' créé avec succès !",
+                'user': {
+                    'username': user.username,
+                    'email': user.email,
+                    'is_superuser': user.is_superuser,
+                    'is_staff': user.is_staff,
+                    'role': user.role
+                },
+                'tokens': {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': f"❌ Erreur lors de la création : {str(e)}"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        """Version GET simple pour créer l'admin par défaut"""
+        return self.post(request)
 
 class LogoutView(generics.GenericAPIView):
     """Déconnexion - blackliste le refresh token"""

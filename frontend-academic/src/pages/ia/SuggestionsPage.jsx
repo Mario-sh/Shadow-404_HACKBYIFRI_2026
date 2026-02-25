@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { iaService } from '../../services/ia'
 import { academicService } from '../../services/academic'
+import { exercicesService } from '../../services/exercices' // ← Ajoute cet import
 import { useAuth } from '../../hooks/useAuth'
 import {
   LightBulbIcon,
@@ -14,9 +15,13 @@ import {
   TrophyIcon,
   ChartBarIcon,
   CheckCircleIcon,
-  XMarkIcon
+  XMarkIcon,
+  DocumentArrowDownIcon, // ← Nouvelle icône
+  PlayCircleIcon,        // ← Nouvelle icône
+  InformationCircleIcon  // ← Nouvelle icône
 } from '@heroicons/react/24/outline'
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid'
+import toast from 'react-hot-toast'
 
 const SuggestionsPage = () => {
   const { user } = useAuth()
@@ -24,6 +29,7 @@ const SuggestionsPage = () => {
   const [filter, setFilter] = useState('all')
   const [selectedDifficulty, setSelectedDifficulty] = useState('all')
   const [feedbackGiven, setFeedbackGiven] = useState({})
+  const [downloadingId, setDownloadingId] = useState(null) // ← État pour le téléchargement
 
   // ============================================
   // 1. RÉCUPÉRER L'ÉTUDIANT CONNECTÉ
@@ -104,7 +110,58 @@ const SuggestionsPage = () => {
   })
 
   // ============================================
-  // 6. CONFIGURATION
+  // 6. FONCTION DE TÉLÉCHARGEMENT
+  // ============================================
+  const handleDownloadExercice = async (suggestion) => {
+    try {
+      setDownloadingId(suggestion.id_exercice)
+
+      // Vérifier si l'exercice a un fichier ou un lien
+      if (suggestion.Type_ressource === 'lien' && suggestion.contenu) {
+        // C'est un lien externe
+        window.open(suggestion.contenu, '_blank', 'noopener noreferrer')
+        toast.success('🔗 Lien ouvert dans un nouvel onglet')
+      }
+      else if (suggestion.fichier_url) {
+        // C'est un fichier uploadé
+        if (suggestion.Type_ressource === 'pdf' || suggestion.Type_ressource === 'document') {
+          // Ouvrir le PDF dans un nouvel onglet (ou télécharger selon l'URL)
+          window.open(suggestion.fichier_url, '_blank')
+          toast.success('📄 Fichier ouvert dans un nouvel onglet')
+        } else {
+          // Télécharger le fichier
+          const link = document.createElement('a')
+          link.href = suggestion.fichier_url
+          link.setAttribute('download', '') // Force le téléchargement
+          document.body.appendChild(link)
+          link.click()
+          link.remove()
+          toast.success('⬇️ Téléchargement démarré')
+        }
+      }
+      else {
+        // Pas de fichier, rediriger vers la page de l'exercice
+        window.location.href = `/exercices/${suggestion.id_exercice}`
+      }
+
+      // Envoyer un feedback implicite (l'étudiant a commencé l'exercice suggéré)
+      try {
+        await iaService.sendFeedback(suggestion.id_suggestion, true)
+        setFeedbackGiven({ ...feedbackGiven, [suggestion.id_suggestion]: true })
+      } catch (error) {
+        console.error('Erreur feedback implicite:', error)
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur lors du téléchargement:', error)
+      toast.error('Erreur lors du téléchargement')
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  // ============================================
+  // 7. CONFIGURATION
   // ============================================
   const difficultyColors = {
     1: {
@@ -138,6 +195,29 @@ const SuggestionsPage = () => {
     if (priority > 60) return { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Élevée', color: 'orange' }
     if (priority > 40) return { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Moyenne', color: 'yellow' }
     return { bg: 'bg-green-100', text: 'text-green-700', label: 'Normale', color: 'green' }
+  }
+
+  const getTypeIcon = (type) => {
+    switch(type) {
+      case 'pdf':
+        return <DocumentArrowDownIcon className="h-4 w-4 text-red-500" />
+      case 'video':
+        return <PlayCircleIcon className="h-4 w-4 text-blue-500" />
+      case 'lien':
+        return <InformationCircleIcon className="h-4 w-4 text-green-500" />
+      default:
+        return <DocumentArrowDownIcon className="h-4 w-4 text-gray-500" />
+    }
+  }
+
+  const getTypeLabel = (type) => {
+    const labels = {
+      pdf: 'PDF',
+      video: 'Vidéo',
+      lien: 'Lien',
+      document: 'Document'
+    }
+    return labels[type] || 'Exercice'
   }
 
   const handleFeedback = async (suggestionId, estUtile) => {
@@ -334,7 +414,7 @@ const SuggestionsPage = () => {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h3 className="text-xl font-semibold text-secondary-900">{suggestion.titre}</h3>
-                        <div className="flex items-center gap-3 mt-1">
+                        <div className="flex items-center gap-2 flex-wrap mt-1">
                           <span className="text-sm text-secondary-500">{suggestion.subject_nom}</span>
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${difficulty.bg} ${difficulty.text}`}>
                             {difficulty.icon} {difficulty.label}
@@ -342,6 +422,14 @@ const SuggestionsPage = () => {
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${priority.bg} ${priority.text}`}>
                             Priorité {priority.label}
                           </span>
+
+                          {/* Badge de type */}
+                          {suggestion.Type_ressource && (
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-secondary-100 text-secondary-600 flex items-center gap-1">
+                              {getTypeIcon(suggestion.Type_ressource)}
+                              {getTypeLabel(suggestion.Type_ressource)}
+                            </span>
+                          )}
                         </div>
                       </div>
 
@@ -397,9 +485,37 @@ const SuggestionsPage = () => {
                     )}
 
                     {/* Actions */}
-                    <div className="mt-4 flex items-center justify-end">
-                      <button className="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors">
-                        Voir l'exercice
+                    <div className="mt-4 flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleDownloadExercice(suggestion)}
+                        disabled={downloadingId === suggestion.id_exercice}
+                        className="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {downloadingId === suggestion.id_exercice ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                            Téléchargement...
+                          </>
+                        ) : (
+                          <>
+                            {suggestion.Type_ressource === 'lien' ? (
+                              <>
+                                <InformationCircleIcon className="h-5 w-5" />
+                                Voir le lien
+                              </>
+                            ) : suggestion.fichier_url ? (
+                              <>
+                                <DocumentArrowDownIcon className="h-5 w-5" />
+                                Télécharger
+                              </>
+                            ) : (
+                              <>
+                                <AcademicCapIcon className="h-5 w-5" />
+                                Commencer
+                              </>
+                            )}
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

@@ -59,8 +59,8 @@
 
 | 🌐 Application web | ⚡ API REST | 🎬 Vidéo de présentation |
 |:------------------:|:-----------:|:------------------------:|
-| **[academictwins.vercel.app](https://academictwins.vercel.app/)** | **[Backend sur Render](https://shadow-404-hackbyifri-2026-iepp.onrender.com)** | **[Voir sur Google Drive](LIEN_GOOGLE_DRIVE_ICI)** |
-| Frontend React + Vite | Django REST Framework | Démo complète du projet |
+| **[academictwins.vercel.app](https://academictwins.vercel.app/)** | **[Backend sur Render](https://shadow-404-hackbyifri-2026-iepp.onrender.com)** | **[Voir sur Google Drive](https://drive.google.com/file/d/1UNWSdpm4J3nbN0Jvv6qXt4kg9RAV2Wk9/view?usp=drivesdk)** |
+| Frontend React + Vite | Django REST Framework | Démo Partielle du projet |
 
 </div>
 

@@ -12,7 +12,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
-from django.http import JsonResponse
+
 User = get_user_model()
 
 
@@ -146,36 +146,23 @@ class LoginView(generics.GenericAPIView):
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
-# backend/create_real_admin.py
+# backend/promote_admin.py
 
 
-User = get_user_model()
-
-# Supprime l'ancien 'admin' s'il existe et que ce n'est pas un superuser
 try:
-    old_admin = User.objects.get(username='admin')
-    if not old_admin.is_superuser:
-        print(f"🗑️ Suppression de l'ancien utilisateur 'admin' (pas superuser)...")
-        old_admin.delete()
-        print("✅ Ancien utilisateur supprimé.")
-    else:
-        print("✅ L'utilisateur 'admin' est déjà un superuser.")
-        exit()
+    user = User.objects.get(username='admin')
+
+    # Promouvoir en superadmin
+    user.is_superuser = True
+    user.is_staff = True
+    user.save()
+
+    print(f"✅ L'utilisateur '{user.username}' est maintenant SUPERADMIN !")
+    print(f"👑 is_superuser: {user.is_superuser}")
+    print(f"🔰 is_staff: {user.is_staff}")
+
 except User.DoesNotExist:
-    pass
-
-# Crée le vrai superutilisateur
-username = "admin"
-email = "admin@academictwins.com"
-password = "Admin@2026!Secure"  # Change ce mot de passe !
-
-User.objects.create_superuser(
-    username=username,
-    email=email,
-    password=password
-)
-print(f"✅ SUPERUSER '{username}' créé avec succès !")
-print(f"👑 Privilèges : Superuser = True, Staff = True")
+    print("❌ Utilisateur 'admin' non trouvé.")
 
 class LogoutView(generics.GenericAPIView):
     """Déconnexion - blackliste le refresh token"""

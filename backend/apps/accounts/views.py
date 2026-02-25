@@ -1,4 +1,4 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, status,serializers
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
@@ -141,9 +141,14 @@ class LoginView(generics.GenericAPIView):
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
+class EmptySerializer(serializers.Serializer):
+    """Sérialiseur vide pour satisfaire DRF"""
+    pass
+
 class CreateAdminView(generics.GenericAPIView):
     """Vue temporaire pour créer un superutilisateur admin"""
-    permission_classes = [permissions.AllowAny]  # Temporaire, à sécuriser ou supprimer après usage
+    permission_classes = [permissions.AllowAny]
+    serializer_class = EmptySerializer
 
     def post(self, request):
         """
